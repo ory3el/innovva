@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Innovva</title>
+	
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
+  <link rel="icon" id="favicon" type="image/png" sizes="144x144" href="/images/favicon-light.png">
+	
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+	
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@400..700&family=Marck+Script&family=Noto+Sans:ital,wght@0,100..900;1,100..900&family=Outfit:wght@100..900&family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap" rel="stylesheet">
+
+</head>
+<body>
+
+<!-- Cursor -->
+<div id="cursor-dot"></div>
+<div id="cursor-ring"></div>
+
+<!-- HEADER -->
+<header>
+  <div class="header-inner">
+    <div class="logo">
+       <button onclick="window.scrollTo({top:0,behavior:'smooth'})">
+         <img src="/images/mainlogo.png" style="position: relative; top: 0px; width: 200px; height: auto; display: block;" alt="Ecomme"/>
+       </button>
+    </div>
+    <nav class="nav-main">
+      <a href="/" class="active">Início</a>
+      <a href="/products">Produtos</a>
+      <a href="/categories">Categorias</a>
+      <a href="/offers">Ofertas</a>
+      <a href="/about-us">Sobre</a>
+    </nav>
+    <div class="search-bar">
+      <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      <input type="text" id="headerSearch" placeholder="Buscar produtos..." oninput="renderProducts()">
+    </div>
+    <div class="header-actions">
+	  <button class="icon-btn hidden" id="bellBtn" title="Notificações" onclick="openNotif()">
+        <svg viewBox="0 0 24 24"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+        <span class="hd-badge" id="bellBadge" style="display:none">0</span>
+      </button>
+      <button class="icon-btn" title="Lista de desejos" onclick="openFav()">
+        <svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+        <span class="hd-badge" id="wishBadge" style="display:none">0</span>
+      </button>
+      <button class="icon-btn" title="Abrir carrinho" onclick="openCart()">
+        <svg viewBox="0 0 24 24"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+        <span class="hd-badge" id="cartBadge" style="display:none">0</span>
+      </button>
+	  <button id="authLoginBtn" class="btn-account" onclick="buttonLink('/login')">
+    	<svg style="width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+    	Entrar
+  	  </button>
+	  <button class="icon-btn" title="Abrir menu" onclick="openMore()">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+    	  <path d="M4 6H20M4 12H20M4 18H20" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  		</svg>
+      </button>
+  	  <div id="headerProfileContainer" class="header-profile hidden" onclick="openAcc()">
+    	<img id="headerAvatar" src="/images/icons/full/user.webp" alt="Perfil">
+  	  </div>
+    </div>
+  </div>
+</header>
+
+<!-- Aurora BG -->
+<div class="aurora" aria-hidden="true">
+  <div class="aurora-blob"></div>
+  <div class="aurora-blob"></div>
+  <div class="aurora-blob"></div>
+</div>
+<div class="noise" aria-hidden="true"></div>
+
+<div class="page">
+
+  <!-- ── HERO: Glitch + Split Reveal ── -->
+  <section class="hero">
+    <div class="spotlight-content">
+      <span class="tag">no libraries. no mercy.</span>
+    </div>
+    <div class="glitch-wrap reveal">
+      <h1 class="glitch" data-text="RAW.CSS">INNOVVA</h1>
+    </div>
+    <p class="hero-sub">
+      <span>no&nbsp;react.</span>&nbsp;
+      <span>no&nbsp;gsap.</span>&nbsp;
+      <span>no&nbsp;tailwind.</span>&nbsp;
+      <span>just&nbsp;craft.</span>
+    </p>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- ── MARQUEE ── -->
+  <div class="marquee-wrap" aria-hidden="true">
+    <div class="marquee-track" id="marquee">
+      <!-- populated by JS -->
+    </div>
+  </div>
+
+  <!-- ── GLASS CARDS ── -->
+  <section>
+    <span class="tag reveal">01 — Glassmorphism + Conic Border</span>
+    <div class="cards-grid">
+      <div class="card reveal" data-tilt>
+        <span class="card-icon">✦</span>
+        <p class="card-title">Animated Conic Border</p>
+        <p class="card-desc">@property --angle spins a conic-gradient on hover for a living light effect.</p>
+      </div>
+      <div class="card reveal" data-tilt>
+        <span class="card-icon">◈</span>
+        <p class="card-title">Shimmer Sweep</p>
+        <p class="card-desc">background-position transition slides a highlight across the glass surface.</p>
+      </div>
+      <div class="card reveal" data-tilt>
+        <span class="card-icon">⬡</span>
+        <p class="card-title">3D Tilt</p>
+        <p class="card-desc">JavaScript rotateX/Y on mousemove with perspective gives true spatial depth.</p>
+      </div>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- ── SCRAMBLE TEXT ── -->
+  <section>
+    <span class="tag reveal">02 — Text Scramble</span>
+    <div id="scramble-text" class="reveal">Hover me</div>
+    <p class="scramble-hint reveal">hover or tap to scramble</p>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- ── SPOTLIGHT ── -->
+  <section class="spotlight-section">
+    <canvas id="spotlight-canvas"></canvas>
+    <div class="spotlight-content">
+      <span class="tag reveal">03 — Spotlight Cursor</span>
+      <br><br>
+      <p class="big-label reveal">move your cursor here</p>
+      <p class="scramble-hint reveal">no canvas library. just canvas api.</p>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="script.js"></script>
+</body>
+</html>
