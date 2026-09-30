@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>NetSpeed | Innovva</title>
+<title>NetSpeed</title>
 <style>
 /* ===== Paleta (edite as variáveis para trocar as cores) ===== */
 *{box-sizing:border-box;margin:0}
@@ -169,6 +169,8 @@ input[type=checkbox]{width:22px;height:22px;accent-color:var(--primary)}
 </div></dialog>
 
 <script>
+"use strict";
+/* ===================== CONFIGURAÇÃO (edite aqui) ===================== */
 const APP_NAME = "NetSpeed";
 /* Medição real: o navegador baixa/envia dados para estes endpoints.
    Para usar seu próprio servidor, troque as URLs (precisam enviar CORS: Access-Control-Allow-Origin).
@@ -268,4 +270,182 @@ function drawChart() {
   ctx.strokeStyle = cs.getPropertyValue("--border"); ctx.lineWidth = 1;
   for (let i = 1; i < 4; i++) { ctx.beginPath(); ctx.moveTo(0, h * i / 4); ctx.lineTo(w, h * i / 4); ctx.stroke() }
   const s = S.samples; if (s.length < 2) return;
-  const N = Math.ceil(CFG.duration 
+  const N = Math.ceil(CFG.duration / 150), top = Math.max(...s) * 1.2 || 1, pad = 8;
+  const P = s.map((v, i) => [i / (N - 1) * w, h - pad - v / top * (h - 2 * pad)]);
+  ctx.beginPath(); ctx.moveTo(...P[0]);
+  for (let i = 1; i < P.length - 1; i++) ctx.quadraticCurveTo(P[i][0], P[i][1], (P[i][0] + P[i + 1][0]) / 2, (P[i][1] + P[i + 1][1]) / 2);
+  const l = P[P.length - 1]; ctx.lineTo(l[0], l[1]);
+  const g = ctx.createLinearGradient(0, 0, w, 0); g.addColorStop(0, c2); g.addColorStop(1, c1);
+  ctx.strokeStyle = g; ctx.lineWidth = 2.5; ctx.lineJoin = "round"; ctx.stroke();
+  ctx.lineTo(l[0], h); ctx.lineTo(P[0][0], h); ctx.closePath();
+  const f = ctx.createLinearGradient(0, 0, 0, h); f.addColorStop(0, c1 + "55"); f.addColorStop(1, c1 + "00"); ctx.fillStyle = f; ctx.fill();
+}
+
+/* ===================== INTERFACE DO TESTE ===================== */
+const STEPS = ["ping", "down", "up"];
+function setStep(cur) { const ci = STEPS.indexOf(cur); STEPS.forEach((k, i) => $(`[data-step=${k}]`).className = cur === "end" || i < ci ? "done" : i === ci ? "active" : "") }
+const setStatus = t => $("#status").textContent = t;
+function showNotice(m) { const n = $("#notice"); n.textContent = m; n.hidden = false }
+function renderMetrics() {
+  const r = S.res, set = (id, v) => $(id).textContent = v;
+  set("#mPing", r.ping != null ? r.ping.toFixed(0) : "--"); set("#mJit", r.jitter != null ? r.jitter.toFixed(1) : "--");
+  set("#mDown", r.down != null ? fmt(r.down) : "--"); set("#mUp", r.up != null ? fmt(r.up) : "--");
+  $$(".u").forEach(e => e.textContent = S.unit);
+}
+function showPhaseStats(cur, avg) { $("#stCur").textContent = fmt(cur); $("#stAvg").textContent = fmt(avg); $("#stMax").textContent = fmt(S.max) }
+function resetUI() {
+  S.res = {}; S.samples = []; S.max = 0; renderMetrics(); drawChart(); setStep(""); updateSpeedometer(0, true);
+  ["#stCur", "#stAvg", "#stMax"].forEach(s => $(s).textContent = "--");
+  $("#chartTitle").textContent = "Velocidade em tempo real";
+  $("#notice").hidden = $("#infoCard").hidden = $("#qWrap").hidden = true; document.body.classList.remove("done-glow");
+}
+function setButton(txt, busy) { const b = $("#startBtn"); b.textContent = txt; b.disabled = busy; document.body.classList.toggle("testing", busy) }
+
+/* ===================== TESTE ===================== */
+async function startSpeedTest() {
+  if (S.running) return;
+  if (!window.fetch || !window.performance) return showNotice("Seu navegador não tem suporte às APIs necessárias (fetch / performance). Atualize ou troque de navegador.");
+  if (navigator.onLine === false) return showNotice("Você parece estar sem conexão com a internet. Conecte-se e tente novamente.");
+  S.running = true; resetUI(); setButton("TESTANDO...", true);
+  try {
+    setStatus("Preparando teste...");
+    const metaP = loadMeta(); await prepare();
+    setStep("ping"); setStatus("Medindo ping..."); await measurePing();
+    setStep("down"); setStatus("Testando download..."); await measureDownload();
+    setStep("up"); setStatus("Testando upload..."); await measureUpload();
+    setStep("end"); setStatus("Finalizando..."); await metaP; await sleep(reduced() ? 50 : 500);
+    showResults(); saveResult(); setStatus("Teste concluído"); setButton("TESTAR NOVAMENTE", false);
+  } catch (e) {
+    showNotice(e.message || "Não foi possível concluir a medição. Verifique sua conexão e tente novamente.");
+    setStep(""); updateSpeedometer(0); setStatus("Teste interrompido"); setButton("TENTAR NOVAMENTE", false);
+  } finally { S.running = false }
+}
+async function prepare() { updateSpeedometer(1000); await sleep(reduced() ? 100 : 700); updateSpeedometer(0); await sleep(reduced() ? 100 : 600) }
+function fail(step, e) { // mensagens amigáveis; nunca deixa o teste preso
+  const m = e && e.name === "AbortError" ? `Tempo esgotado na etapa de ${step}. Verifique sua conexão e tente novamente.`
+    : e instanceof TypeError ? `Falha na etapa de ${step}: o endpoint está indisponível, foi bloqueado por CORS ou você está sem conexão. Confira SPEED_TEST_CONFIG e a rede.`
+    : "Não foi possível concluir a medição. Verifique sua conexão e tente novamente.";
+  return new Error(m);
+}
+const fetchT = (url, ms) => { const c = new AbortController(), t = setTimeout(() => c.abort(), ms); return fetch(bust(url), { cache: "no-store", signal: c.signal }).finally(() => clearTimeout(t)) };
+async function loadMeta() { if (!CFG.metaUrl) return; try { S.meta = await (await fetchT(CFG.metaUrl, CFG.timeout)).json() } catch { S.meta = null } }
+
+/* Ping: mede o tempo de ida e volta com performance.now(); descarta a 1ª amostra (handshake). Jitter = variação média entre amostras. */
+async function measurePing() {
+  const t = [];
+  try {
+    for (let i = 0; i < CFG.pingCount; i++) {
+      const a = performance.now(); const r = await fetchT(CFG.pingUrl, CFG.timeout); await r.arrayBuffer();
+      const d = performance.now() - a; if (i > 0) t.push(d);
+      if (t.length) {
+        S.res.ping = [...t].sort((x, y) => x - y)[Math.floor(t.length / 2)];
+        S.res.jitter = t.length > 1 ? t.slice(1).reduce((s, x, j) => s + Math.abs(x - t[j]), 0) / (t.length - 1) : 0;
+        renderMetrics();
+      }
+      await sleep(80);
+    }
+  } catch (e) { throw fail("ping", e) }
+}
+
+/* Download: N conexões paralelas leem o corpo da resposta em stream e contam os bytes recebidos. */
+async function dlWorker(st) {
+  while (!st.ac.signal.aborted) {
+    try {
+      const r = await fetch(bust(CFG.downloadUrl), { cache: "no-store", signal: st.ac.signal });
+      if (!r.ok) throw new Error("HTTP " + r.status);
+      if (r.body && r.body.getReader) { const rd = r.body.getReader(); for (;;) { const { done, value } = await rd.read(); if (done) break; st.bytes += value.length } }
+      else st.bytes += (await r.arrayBuffer()).byteLength;
+    } catch (e) { if (!st.ac.signal.aborted) st.fail = e; return }
+  }
+}
+/* Upload: XHR (fornece progresso de envio) com um Blob de dados aleatórios, repetido até o fim do tempo. */
+let PAYLOAD;
+async function ulWorker(st) {
+  if (!PAYLOAD) { const c = crypto.getRandomValues(new Uint8Array(65536)), a = new Uint8Array(65536 * 64); for (let i = 0; i < 64; i++) a.set(c, i * 65536); PAYLOAD = new Blob([a]) }
+  while (!st.ac.signal.aborted && !st.fail) {
+    await new Promise(res => {
+      const x = new XMLHttpRequest(); let last = 0; st.xhrs.push(x);
+      x.open("POST", bust(CFG.uploadUrl)); x.timeout = CFG.timeout * 3;
+      x.upload.onprogress = e => { st.bytes += e.loaded - last; last = e.loaded };
+      x.onerror = () => { if (!st.ac.signal.aborted) st.fail = new TypeError("upload"); res() };
+      x.onload = () => { if (x.status >= 400) st.fail = new Error("HTTP " + x.status); res() };
+      x.onabort = x.ontimeout = () => res();
+      x.send(PAYLOAD);
+    });
+  }
+}
+/* Amostragem comum: a cada 150 ms calcula a velocidade instantânea (suavizada) e atualiza velocímetro, gráfico e cartões. */
+async function measureThroughput(key, worker) {
+  const st = { bytes: 0, fail: null, ac: new AbortController(), xhrs: [] };
+  S.samples = []; S.max = 0; drawChart();
+  const t0 = performance.now(); let lt = t0, lb = 0, cur = 0, wb = 0, wt = t0, warm = false, sum = 0, n = 0;
+  for (let i = 0; i < CFG.streams; i++) worker(st);
+  await new Promise(res => {
+    const id = setInterval(() => {
+      const now = performance.now(), b = st.bytes;
+      const inst = (b - lb) * 8 / (1e3 * (now - lt)); lt = now; lb = b; // Mbps
+      cur = cur ? cur * .6 + inst * .4 : inst;
+      if (!warm && now - t0 > 1000) { warm = true; wb = b; wt = now } // ignora o 1º segundo (TCP slow start)
+      S.max = Math.max(S.max, cur); if (warm) { sum += cur; n++ }
+      S.res[key] = cur; renderMetrics(); updateSpeedometer(cur); updateChart(cur); showPhaseStats(cur, n ? sum / n : cur);
+      if (now - t0 >= CFG.duration || (st.fail && !b)) { clearInterval(id); res() }
+    }, 150);
+  });
+  st.ac.abort(); st.xhrs.forEach(x => x.abort());
+  if (!st.bytes) throw st.fail || new TypeError("sem dados");
+  const now = performance.now();
+  return warm ? (st.bytes - wb) * 8 / (1e3 * (now - wt)) : st.bytes * 8 / (1e3 * (now - t0));
+}
+async function measureDownload() {
+  $("#chartTitle").textContent = "Download em tempo real (" + S.unit + ")";
+  try { S.res.down = await measureThroughput("down", dlWorker) } catch (e) { throw fail("download", e) }
+  renderMetrics();
+}
+async function measureUpload() {
+  $("#chartTitle").textContent = "Upload em tempo real (" + S.unit + ")";
+  try { S.res.up = await measureThroughput("up", ulWorker) } catch (e) { throw fail("upload", e) }
+  renderMetrics();
+}
+
+/* ===================== RESULTADOS ===================== */
+function countTo(sel, to, dec) { // animação de contagem 0 → valor final
+  const el = $(sel); if (reduced()) { el.textContent = to.toFixed(dec); return }
+  const t0 = performance.now(), D = 1100;
+  (function f(n) { const p = Math.min(1, (n - t0) / D); el.textContent = (to * (1 - Math.pow(1 - p, 3))).toFixed(dec); if (p < 1) requestAnimationFrame(f) })(t0);
+}
+function showResults() {
+  const r = S.res; updateSpeedometer(r.down);
+  countTo("#mDown", conv(r.down), 2); countTo("#mUp", conv(r.up), 2); countTo("#mPing", r.ping, 0); countTo("#mJit", r.jitter, 1);
+  $$(".tile").forEach(t => { t.classList.remove("glow"); void t.offsetWidth; t.classList.add("glow") });
+  document.body.classList.add("done-glow");
+  // Classificação aproximada (apenas uma estimativa)
+  const l = r.down >= 100 && r.ping < 30 ? "excelente" : r.down >= 25 && r.ping < 80 ? "boa" : r.down >= 5 && r.ping < 150 ? "regular" : "baixa";
+  const q = $("#quality"); q.dataset.l = l; q.textContent = l.toUpperCase();
+  $("#qWrap").hidden = false; renderInfo(); $("#infoCard").hidden = false;
+}
+function renderInfo() {
+  const c = navigator.connection || {}, m = S.meta || {}, r = S.res;
+  const colo = m.colo && typeof m.colo === "object" ? (m.colo.city || m.colo.iata) : m.colo;
+  let host = ""; try { host = new URL(CFG.downloadUrl).hostname } catch {}
+  const rows = [["IP público", m.clientIp], ["Servidor", [m.city, colo].filter(Boolean).join(" · ") || host], ["Tipo de conexão", c.type],
+    ["Tecnologia estimada", c.effectiveType && c.effectiveType.toUpperCase()], ["RTT (navegador)", c.rtt != null && c.rtt + " ms"], ["Downlink (navegador)", c.downlink != null && c.downlink + " Mbps"],
+    ["Economia de dados", c.saveData != null && (c.saveData ? "Ativada" : "Desativada")], ["Latência", r.ping.toFixed(0) + " ms"], ["Jitter", r.jitter.toFixed(1) + " ms"],
+    ["Download", fmt(r.down) + " " + S.unit], ["Upload", fmt(r.up) + " " + S.unit]];
+  $("#info").innerHTML = rows.map(([k, v]) => `<div><dt>${k}</dt><dd>${v ? clean(v) : "Não disponível"}</dd></div>`).join("");
+}
+
+/* ===================== HISTÓRICO (localStorage, sem IP) ===================== */
+const HK = "netspeed.history";
+function saveResult() { const h = store.get(HK, []); h.unshift({ t: Date.now(), d: S.res.down, u: S.res.up, p: S.res.ping }); store.set(HK, h.slice(0, 10)); loadHistory() }
+function loadHistory() {
+  const h = store.get(HK, []);
+  $("#hist").innerHTML = Array.isArray(h) && h.length ? h.map(x => { const d = new Date(x.t);
+    return `<li><time datetime="${d.toISOString()}">${d.toLocaleDateString("pt-BR")} — ${d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}</time><span>↓ ${conv(x.d).toFixed(0)} ${S.unit}</span><span>↑ ${conv(x.u).toFixed(0)} ${S.unit}</span><span>◉ ${Number(x.p).toFixed(0)} ms</span></li>` }).join("")
+    : '<li class="empty">Nenhum teste salvo ainda. Faça o primeiro teste!</li>';
+}
+function clearHistory() { store.set(HK, []); loadHistory() }
+
+initializeApp();
+</script>
+</body>
+</html>
