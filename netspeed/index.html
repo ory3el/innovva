@@ -1,3 +1,1723 @@
+<!DOCTYPE html><html lang="pt-BR" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Innovva Netspeed</title>
+<style>
+/* ===== Paleta (edite as variáveis para trocar as cores) ===== */
+*{box-sizing:border-box;margin:0}
+:root,[data-theme=light]{--bg:#eef2fb;--surface:rgba(255,255,255,.72);--text:#0e1630;--muted:#586380;--primary:#3557ff;--accent:#00b3d1;--border:rgba(14,22,48,.1);--shadow:0 12px 40px rgba(40,60,140,.14);--track:rgba(14,22,48,.08)}
+[data-theme=dark]{--bg:#070b18;--surface:rgba(20,28,54,.62);--text:#e9eeff;--muted:#93a0c4;--primary:#7290ff;--accent:#22e0d0;--border:rgba(160,180,255,.15);--shadow:0 12px 40px rgba(0,0,0,.5);--track:rgba(160,180,255,.12);color-scheme:dark}
+[hidden]{display:none!important}
+body{font:16px/1.5 ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color:var(--text);min-height:100vh;overflow-x:hidden;
+background:radial-gradient(50rem 32rem at 8% -8%,color-mix(in srgb,var(--primary) 24%,transparent),transparent),radial-gradient(44rem 30rem at 100% 10%,color-mix(in srgb,var(--accent) 18%,transparent),transparent),var(--bg);transition:background-color .4s,color .4s}
+:focus-visible{outline:3px solid var(--primary);outline-offset:3px}
+button,select{font:inherit;color:inherit}
+.wrap{width:min(1080px,100% - 32px);margin:0 auto}
+header{position:sticky;top:0;z-index:5;backdrop-filter:blur(16px);background:color-mix(in srgb,var(--bg) 70%,transparent);border-bottom:1px solid var(--border);transition:background-color .4s}
+.bar{display:flex;align-items:center;justify-content:space-between;gap:12px;height:64px}
+.logo{display:flex;align-items:center;gap:10px;font-weight:750;font-size:1.25rem;letter-spacing:-.02em;color:var(--text);text-decoration:none}
+.logo svg{width:32px;height:32px;padding:6px;border-radius:10px;background:linear-gradient(135deg,var(--accent),var(--primary));fill:#fff}
+.tools{display:flex;align-items:center;gap:8px}
+.seg{display:flex;padding:3px;border:1px solid var(--border);border-radius:999px;background:var(--track)}
+.seg button{border:0;background:none;color:var(--muted);padding:6px 11px;border-radius:999px;cursor:pointer;font-size:.85rem;transition:background .25s,color .25s}
+.seg [aria-pressed=true]{background:var(--bg);color:var(--text);box-shadow:0 1px 6px rgba(0,0,0,.15)}
+.icon,.ghost{border:1px solid var(--border);background:var(--surface);border-radius:999px;cursor:pointer;transition:transform .2s,border-color .2s}
+.icon{width:38px;height:38px}.ghost{padding:7px 14px;font-size:.85rem}
+.icon:hover,.ghost:hover{transform:translateY(-1px);border-color:var(--primary)}
+.intro{text-align:center;padding:36px 0 22px}
+h1{font-size:clamp(1.6rem,4.5vw,2.6rem);letter-spacing:-.03em;line-height:1.15}
+.intro p{color:var(--muted);margin-top:8px}
+h2{font-size:1.05rem;letter-spacing:-.01em}
+.notice{margin:0 0 16px;padding:14px 18px;border-radius:16px;background:color-mix(in srgb,#ef4444 14%,var(--surface));border:1px solid #ef4444;animation:rise .4s}
+.grid{display:grid;gap:20px;grid-template-columns:1fr;margin-bottom:20px}
+.grid>*{min-width:0}
+@media(min-width:900px){.grid.a{grid-template-columns:1.05fr 1fr}}
+.grid.b{grid-template-columns:repeat(auto-fit,minmax(min(100%,340px),1fr))}
+.side{display:grid;gap:20px;align-content:start}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:24px;box-shadow:var(--shadow);backdrop-filter:blur(18px);padding:clamp(18px,3vw,28px);animation:rise .6s both;transition:background-color .4s,border-color .4s}
+.grid>:nth-child(2){animation-delay:.1s}
+.ch{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px}
+/* ===== Velocímetro ===== */
+.gauge{position:relative;width:min(100%,420px);margin:0 auto}
+.gauge svg{width:100%;display:block;overflow:visible}
+.gauge text{font-size:9px;fill:var(--muted);font-variant-numeric:tabular-nums}
+#track{fill:none;stroke:var(--track);stroke-width:12;stroke-linecap:round}
+#arc{fill:none;stroke:url(#g);stroke-width:12;stroke-linecap:round;filter:drop-shadow(0 0 6px color-mix(in srgb,var(--primary) 55%,transparent))}
+.dash{fill:none;stroke:var(--border);stroke-width:1;stroke-dasharray:2 5}
+#needle line{stroke:var(--text);stroke-width:3;stroke-linecap:round}
+#needle circle{fill:var(--primary);stroke:var(--bg);stroke-width:3}
+.readout{position:absolute;left:0;right:0;top:57%;text-align:center}
+#speedVal{display:block;font-size:clamp(2.2rem,10vw,3.5rem);font-weight:750;letter-spacing:-.03em;line-height:1;font-variant-numeric:tabular-nums}
+#unit{color:var(--muted);font-size:.95rem}
+#status{font-size:.9rem;font-weight:600;margin-top:4px}
+.testing .gauge{animation:pulse 1.8s ease-in-out infinite}
+.done-glow #arc{animation:glow 1.4s}
+.cta{display:block;margin:14px auto 22px;width:min(100%,320px);padding:18px 24px;border:0;border-radius:999px;cursor:pointer;color:#fff;font-weight:750;font-size:1.1rem;letter-spacing:.06em;background:linear-gradient(135deg,var(--accent),var(--primary));box-shadow:0 10px 30px color-mix(in srgb,var(--primary) 45%,transparent);transition:transform .25s,box-shadow .25s,opacity .25s}
+.cta:hover:not(:disabled){transform:translateY(-3px) scale(1.02);box-shadow:0 16px 40px color-mix(in srgb,var(--primary) 55%,transparent)}
+.cta:disabled{opacity:.6;cursor:progress}
+.steps{list-style:none;padding:0;display:flex;gap:8px;justify-content:center}
+.steps li{flex:1;display:flex;align-items:center;justify-content:center;gap:8px;padding:10px 6px;border-radius:14px;border:1px solid var(--border);color:var(--muted);font-size:.9rem;transition:all .3s}
+.dot::before{content:"○"}
+.steps .active{color:var(--text);border-color:var(--primary);background:color-mix(in srgb,var(--primary) 10%,transparent)}
+.active .dot::before{content:"●";color:var(--primary);animation:blink 1s infinite}
+.steps .done{color:var(--text)}
+.done .dot::before{content:"✓";color:var(--accent);font-weight:800;display:inline-block;animation:pop .45s}
+canvas{width:100%;height:190px;display:block}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px;text-align:center}
+.stats dt{color:var(--muted);font-size:.8rem}.stats dd{font-weight:700;font-variant-numeric:tabular-nums}
+.tiles{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px}
+.tile{padding:14px;border-radius:18px;border:1px solid var(--border);background:var(--track)}
+.tile .k{display:block;color:var(--muted);font-size:.85rem}
+.tile b{font-size:clamp(1.3rem,4.5vw,1.85rem);letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.tile small{color:var(--muted);font-size:.8rem;font-weight:500}
+.tile.glow{animation:glow 1.4s}
+.q{display:inline-block;margin-top:16px;padding:6px 16px;border-radius:999px;font-weight:750;letter-spacing:.05em;color:#fff;background:var(--c,#888);animation:pop .5s}
+#qHint{display:block;margin-top:6px;color:var(--muted);font-size:.82rem}
+.q[data-l=excelente]{--c:#16a870}.q[data-l=boa]{--c:#2b8fe0}.q[data-l=regular]{--c:#d98a0b}.q[data-l=baixa]{--c:#dc3c3c}
+.info{display:grid;gap:2px;margin-top:8px}
+.info div{display:flex;justify-content:space-between;gap:12px;padding:8px 0;border-bottom:1px solid var(--border);font-size:.92rem}
+.info dt{color:var(--muted)}.info dd{font-weight:600;text-align:right;overflow-wrap:anywhere}
+#hist{list-style:none;padding:0}
+#hist li{display:flex;flex-wrap:wrap;gap:4px 14px;padding:10px 0;border-bottom:1px solid var(--border);font-size:.9rem;font-variant-numeric:tabular-nums}
+#hist time{flex-basis:100%;color:var(--muted);font-size:.8rem}
+#hist .empty{color:var(--muted)}
+.foot{color:var(--muted);font-size:.8rem;text-align:center;padding:8px 0 40px}/* ===== Configurações ===== */dialog{margin:auto;width:min(420px,calc(100% - 32px));border:1px solid var(--border);border-radius:24px;padding:0;background:var(--bg);color:var(--text);box-shadow:var(--shadow)}dialog[open]{animation:pop .3s}dialog::backdrop{background:rgba(5,10,25,.55);backdrop-filter:blur(4px)}.dbody{padding:22px}.row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 0;border-bottom:1px solid var(--border)}dialog .seg .lb{display:inline!important}select{padding:8px 10px;border-radius:10px;border:1px solid var(--border);background:var(--surface)}input[type=checkbox]{width:22px;height:22px;accent-color:var(--primary)}@media(max-width:560px){.seg .lb{display:none}.logo{font-size:1.1rem}.card{border-radius:20px}.steps li{font-size:.8rem;gap:4px}}
+
+/* ===== Animações ===== /@keyframes rise{from{opacity:0;transform:translateY(14px)}}@keyframes pop{from{opacity:0;transform:scale(.7)}}@keyframes blink{50%{opacity:.35}}@keyframes pulse{50%{filter:drop-shadow(0 0 18px color-mix(in srgb,var(--primary) 45%,transparent))}}@keyframes glow{0%,100%{box-shadow:none}40%{box-shadow:0 0 0 3px var(--accent),0 0 28px var(--accent)}}@media(prefers-reduced-motion:reduce){,*::before{animation:none!important;transition:none!important}}[data-motion=off] *,[data-motion=off] *::before{animation:none!important;transition:none!important}</style>
+
+</head><body>
+<header>
+  <div class="wrap bar">
+    <a class="logo" href="./" aria-label="Início">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M13 2 4 14h6l-1 8 9-12h-6z"/>
+      </svg>
+      <span id="appName">NetSpeed</span>
+    </a><div class="tools">
+  <div class="seg" data-themeseg role="group" aria-label="Tema"></div>
+  <button class="icon" id="openSettings" aria-label="Abrir configurações">⚙</button>
+</div>
+
+  </div>
+</header><main class="wrap" id="app">
+  <div class="intro">
+    <h1>Teste a velocidade da sua conexão</h1>
+    <p>Latência, download e upload medidos de verdade, direto no navegador.</p>
+  </div>  <p id="notice" class="notice" role="alert" hidden></p>  <div class="grid a">
+    <section class="card" aria-label="Teste de velocidade">
+      <div class="gauge">
+        <svg viewBox="0 0 300 300" role="img" aria-label="Velocímetro circular. Os valores em texto estão sempre disponíveis nos resultados.">
+          <defs>
+            <linearGradient id="g" x1="0" y1="1" x2="1" y2="0">
+              <stop offset="0" style="stop-color:var(--accent)"/>
+              <stop offset="1" style="stop-color:var(--primary)"/>
+            </linearGradient>
+          </defs><circle class="dash" cx="150" cy="150" r="146"/>
+      <circle id="track" cx="150" cy="150" r="118" transform="rotate(135 150 150)"/>
+      <circle id="arc" cx="150" cy="150" r="118" transform="rotate(135 150 150)"/>
+      <g id="ticks"></g>
+
+      <g id="needle">
+        <line x1="150" y1="150" x2="150" y2="62"/>
+        <circle cx="150" cy="150" r="8"/>
+      </g>
+    </svg>
+
+    <div class="readout">
+      <output id="speedVal">0.00</output>
+      <span id="unit">Mbps</span>
+      <p id="status" role="status" aria-live="polite">Pronto para testar</p>
+    </div>
+  </div>
+
+  <button class="cta" id="startBtn">INICIAR TESTE</button>
+
+  <ol class="steps" aria-label="Etapas do teste">
+    <li data-step="ping"><i class="dot"></i>Ping</li>
+    <li data-step="down"><i class="dot"></i>Download</li>
+    <li data-step="up"><i class="dot"></i>Upload</li>
+  </ol>
+</section>
+
+<div class="side">
+  <section class="card">
+    <div class="ch">
+      <h2 id="chartTitle">Velocidade em tempo real</h2>
+    </div>
+
+    <canvas id="chart" role="img" aria-label="Gráfico da velocidade ao longo do tempo"></canvas>
+
+    <dl class="stats">
+      <div><dt>Atual</dt><dd id="stCur">--</dd></div>
+      <div><dt>Média</dt><dd id="stAvg">--</dd></div>
+      <div><dt>Máxima</dt><dd id="stMax">--</dd></div>
+    </dl>
+  </section>
+
+  <section class="card">
+    <h2>Resultado do teste</h2>
+
+    <div class="tiles">
+      <div class="tile">
+        <span class="k">↓ Download</span>
+        <b><output id="mDown">--</output> <small class="u">Mbps</small></b>
+      </div>
+
+      <div class="tile">
+        <span class="k">↑ Upload</span>
+        <b><output id="mUp">--</output> <small class="u">Mbps</small></b>
+      </div>
+
+      <div class="tile">
+        <span class="k">◉ Ping</span>
+        <b><output id="mPing">--</output> <small>ms</small></b>
+      </div>
+
+      <div class="tile">
+        <span class="k">≈ Jitter</span>
+        <b><output id="mJit">--</output> <small>ms</small></b>
+      </div>
+    </div>
+
+    <div id="qWrap" hidden>
+      <span class="q" id="quality"></span>
+      <small id="qHint">Estimativa baseada nos valores medidos; não é uma classificação absoluta.</small>
+    </div>
+  </section>
+</div>
+
+  </div>  <div class="grid b">
+    <section class="card" id="infoCard" hidden>
+      <h2>Informações da conexão</h2>
+      <dl class="info" id="info"></dl>
+    </section><section class="card">
+  <div class="ch">
+    <h2>Histórico</h2>
+    <button class="ghost" data-clear>Limpar histórico</button>
+  </div>
+
+  <ul id="hist"></ul>
+</section>
+
+  </div>  <p class="foot">
+    Medição real com fetch() e XHR nos endpoints de SPEED_TEST_CONFIG
+    (padrão: Cloudflare). Nada é simulado. O histórico fica só neste navegador
+    e o IP nunca é salvo. Resultados variam com Wi-Fi, servidor e uso da rede.
+  </p>
+</main><dialog id="dlg" aria-labelledby="dlgT">
+  <div class="dbody">
+    <div class="ch">
+      <h2 id="dlgT">Configurações</h2>
+      <button class="icon" id="closeDlg" aria-label="Fechar">✕</button>
+    </div><div class="row">
+  <span>Tema</span>
+  <div class="seg" data-themeseg role="group" aria-label="Tema"></div>
+</div>
+
+<label class="row">
+  <span>Unidade de velocidade</span>
+  <select id="unitSel">
+    <option>Mbps</option>
+    <option>MB/s</option>
+    <option>Kbps</option>
+  </select>
+</label>
+
+<label class="row">
+  <span>Animações</span>
+  <input type="checkbox" id="animChk">
+</label>
+
+<div class="row" style="border:0">
+  <span>Histórico local</span>
+  <button class="ghost" data-clear>Limpar histórico</button>
+</div>
+
+  </div>
+</dialog><script>
+"use strict";
+
+/* ===================== CONFIGURAÇÃO ===================== */
+const APP_NAME = "NetSpeed";
+
+const SPEED_TEST_CONFIG = {
+  downloadUrl: "https://speed.cloudflare.com/__down?bytes=50000000",
+  uploadUrl: "https://speed.cloudflare.com/__up",
+  pingUrl: "https://speed.cloudflare.com/__down?bytes=0",
+  metaUrl: "https://speed.cloudflare.com/meta",
+
+  pingCount: 10,
+  streams: 4,
+  duration: 8000,
+  timeout: 5000
+};
+
+const CFG = SPEED_TEST_CONFIG;
+
+/* ===================== ESTADO ===================== */
+const $ = s => document.querySelector(s);
+const $$ = s => [...document.querySelectorAll(s)];
+
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+const S = {
+  theme: "auto",
+  unit: "Mbps",
+  anim: true,
+
+  cur: 0,
+  target: 0,
+
+  running: false,
+
+  samples: [],
+  max: 0,
+
+  res: {},
+  meta: null,
+
+  /* estado da suavização visual */
+  smoothWindow: [],
+  smoothValue: 0
+};
+
+const mq = window.matchMedia("(prefers-color-scheme: dark)");
+
+const store = {
+  get(k, d) {
+    try {
+      return JSON.parse(localStorage.getItem(k)) ?? d;
+    } catch {
+      return d;
+    }
+  },
+
+  set(k, v) {
+    try {
+      localStorage.setItem(k, JSON.stringify(v));
+    } catch {}
+  }
+};
+
+const reduced = () =>
+  !S.anim || matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+const conv = v =>
+  S.unit === "MB/s" ? v / 8 :
+  S.unit === "Kbps" ? v * 1000 :
+  v;
+
+const fmt = v => conv(v).toFixed(2);
+
+const bust = u =>
+  u + (u.includes("?") ? "&" : "?") + "r=" +
+  Math.random().toString(36).slice(2);
+
+const clean = v => String(v).replace(/[<>&"']/g, "");
+
+const persist = () =>
+  store.set("netspeed.settings", {
+    theme: S.theme,
+    unit: S.unit,
+    anim: S.anim
+  });
+
+/* ===================== INICIALIZAÇÃO ===================== */
+function initializeApp() {
+  document.title = APP_NAME + " — Teste de velocidade";
+  $("#appName").textContent = APP_NAME;
+
+  const saved = store.get("netspeed.settings", {});
+
+  if (["light", "dark", "auto"].includes(saved.theme))
+    S.theme = saved.theme;
+
+  if (["Mbps", "MB/s", "Kbps"].includes(saved.unit))
+    S.unit = saved.unit;
+
+  if (typeof saved.anim === "boolean")
+    S.anim = saved.anim;
+
+  $("#unitSel").value = S.unit;
+  $("#animChk").checked = S.anim;
+
+  applyMotion();
+  initializeTheme();
+  initializeSpeedometer();
+  initializeChart();
+  refreshUnits();
+  loadHistory();
+
+  const dlg = $("#dlg");
+
+  $("#startBtn").onclick = startSpeedTest;
+
+  $("#openSettings").onclick = () => dlg.showModal();
+
+  $("#closeDlg").onclick = () => dlg.close();
+
+  dlg.onclick = e => {
+    if (e.target === dlg) dlg.close();
+  };
+
+  $("#unitSel").onchange = e => {
+    S.unit = e.target.value;
+    persist();
+    refreshUnits();
+  };
+
+  $("#animChk").onchange = e => {
+    S.anim = e.target.checked;
+    persist();
+    applyMotion();
+  };
+
+  document.addEventListener("click", e => {
+    const b = e.target.closest("[data-tc]");
+
+    if (b) {
+      S.theme = b.dataset.tc;
+      persist();
+      applyTheme();
+    }
+
+    if (
+      e.target.closest("[data-clear]") &&
+      confirm("Apagar todo o histórico de testes? Esta ação não pode ser desfeita.")
+    ) {
+      clearHistory();
+    }
+  });
+}
+
+function applyMotion() {
+  document.documentElement.dataset.motion = S.anim ? "on" : "off";
+}
+
+function refreshUnits() {
+  $("#unit").textContent = S.unit;
+
+  renderMetrics();
+  loadHistory();
+
+  /* apenas sincroniza o valor atual, sem criar movimento */
+  updateSpeedometer(S.target, true);
+
+  if (!$("#infoCard").hidden)
+    renderInfo();
+}
+
+/* ===================== TEMA ===================== */
+function initializeTheme() {
+  $$("[data-themeseg]").forEach(el => {
+    el.innerHTML = [
+      ["light", "☀️", "Claro"],
+      ["dark", "🌙", "Escuro"],
+      ["auto", "⚙️", "Automático"]
+    ]
+      .map(
+        ([k, i, l]) =>
+          `<button data-tc="${k}" title="${l}" aria-label="${l}">
+            <span aria-hidden="true">${i}</span>
+            <span class="lb">${l}</span>
+          </button>`
+      )
+      .join("");
+  });
+
+  mq.addEventListener("change", () =>
+    S.theme === "auto" && applyTheme()
+  );
+
+  applyTheme();
+}
+
+function applyTheme() {
+  document.documentElement.dataset.theme =
+    S.theme === "dark" ||
+    (S.theme === "auto" && mq.matches)
+      ? "dark"
+      : "light";
+
+  $$("[data-tc]").forEach(b =>
+    b.setAttribute(
+      "aria-pressed",
+      b.dataset.tc === S.theme
+    )
+  );
+
+  drawChart();
+}
+
+/* ===================== VELOCÍMETRO ===================== */
+const R = 118;
+const CIRC = 2 * Math.PI * R;
+const ARC = CIRC * 0.75;
+
+const MARKS = [
+  0, 5, 10, 25, 50, 100, 250, 500, 1000
+];
+
+/*
+ * O ponteiro utiliza escala logarítmica:
+ * 0 → começo
+ * 1000 → final
+ */
+const frac = v =>
+  Math.min(
+    1,
+    Math.log10(1 + Math.max(0, v)) /
+    Math.log10(1001)
+  );
+
+/*
+ * Suavização do ponteiro.
+ *
+ * Quanto menor o valor, mais "pesado" fica o ponteiro.
+ * 0.09 = movimento bem suave.
+ */
+const NEEDLE_EASE = 0.09;
+
+let raf = 0;
+
+function initializeSpeedometer() {
+  $("#ticks").innerHTML = MARKS.map(m => {
+    const a =
+      (-135 + frac(m) * 270) *
+      Math.PI / 180;
+
+    return `
+      <text
+        x="${150 + 134 * Math.sin(a)}"
+        y="${153 - 134 * Math.cos(a)}"
+        text-anchor="middle"
+      >${m}</text>
+    `;
+  }).join("");
+
+  $("#track").setAttribute(
+    "stroke-dasharray",
+    `${ARC} ${CIRC}`
+  );
+
+  /* começa realmente em zero */
+  updateSpeedometer(0, true);
+}
+
+function updateSpeedometer(v, snap = false) {
+  S.target = Math.max(0, Number(v) || 0);
+
+  /*
+   * "snap" só é usado quando precisamos sincronizar
+   * o indicador instantaneamente, como ao resetar a UI.
+   */
+  if (snap || reduced()) {
+    S.cur = S.target;
+  }
+
+  cancelAnimationFrame(raf);
+  tick();
+}
+
+function tick() {
+  const d = S.target - S.cur;
+
+  /*
+   * Interpolação mais lenta e contínua.
+   * Isso evita que o ponteiro "teleporte" entre amostras.
+   */
+  if (Math.abs(d) < 0.01) {
+    S.cur = S.target;
+  } else {
+    S.cur += d * NEEDLE_EASE;
+  }
+
+  const f = frac(S.cur);
+
+  $("#arc").setAttribute(
+    "stroke-dasharray",
+    `${f * ARC} ${CIRC}`
+  );
+
+  $("#needle").setAttribute(
+    "transform",
+    `rotate(${-135 + f * 270} 150 150)`
+  );
+
+  $("#speedVal").textContent =
+    conv(S.cur).toFixed(2);
+
+  if (Math.abs(S.cur - S.target) > 0.01) {
+    raf = requestAnimationFrame(tick);
+  }
+}
+
+/* ===================== GRÁFICO ===================== */
+let cv, ctx;
+
+const SAMPLE_MS = 200;
+
+function initializeChart() {
+  cv = $("#chart");
+  ctx = cv.getContext("2d");
+
+  new ResizeObserver(drawChart).observe(cv);
+}
+
+function updateChart(v) {
+  S.samples.push(v);
+  drawChart();
+}
+
+function drawChart() {
+  if (!ctx) return;
+
+  const dpr = devicePixelRatio || 1;
+  const w = cv.clientWidth;
+  const h = cv.clientHeight;
+
+  if (!w) return;
+
+  if (
+    cv.width !== Math.round(w * dpr) ||
+    cv.height !== Math.round(h * dpr)
+  ) {
+    cv.width = Math.round(w * dpr);
+    cv.height = Math.round(h * dpr);
+  }
+
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.clearRect(0, 0, w, h);
+
+  const cs = getComputedStyle(document.documentElement);
+
+  const c1 =
+    cs.getPropertyValue("--primary").trim();
+
+  const c2 =
+    cs.getPropertyValue("--accent").trim();
+
+  ctx.strokeStyle =
+    cs.getPropertyValue("--border");
+
+  ctx.lineWidth = 1;
+
+  for (let i = 1; i < 4; i++) {
+    ctx.beginPath();
+    ctx.moveTo(0, h * i / 4);
+    ctx.lineTo(w, h * i / 4);
+    ctx.stroke();
+  }
+
+  const s = S.samples;
+
+  if (s.length < 2)
+    return;
+
+  const N = Math.ceil(
+    CFG.duration / SAMPLE_MS
+  );
+
+  const top =
+    Math.max(...s) * 1.2 || 1;
+
+  const pad = 8;
+
+  const P = s.map((v, i) => [
+    i / Math.max(1, N - 1) * w,
+    h - pad -
+      v / top * (h - 2 * pad)
+  ]);
+
+  ctx.beginPath();
+  ctx.moveTo(...P[0]);
+
+  for (
+    let i = 1;
+    i < P.length - 1;
+    i++
+  ) {
+    ctx.quadraticCurveTo(
+      P[i][0],
+      P[i][1],
+      (P[i][0] + P[i + 1][0]) / 2,
+      (P[i][1] + P[i + 1][1]) / 2
+    );
+  }
+
+  const l = P[P.length - 1];
+
+  ctx.lineTo(l[0], l[1]);
+
+  const g =
+    ctx.createLinearGradient(0, 0, w, 0);
+
+  g.addColorStop(0, c2);
+  g.addColorStop(1, c1);
+
+  ctx.strokeStyle = g;
+  ctx.lineWidth = 2.5;
+  ctx.lineJoin = "round";
+  ctx.stroke();
+
+  ctx.lineTo(l[0], h);
+  ctx.lineTo(P[0][0], h);
+  ctx.closePath();
+
+  const f =
+    ctx.createLinearGradient(0, 0, 0, h);
+
+  f.addColorStop(0, c1 + "55");
+  f.addColorStop(1, c1 + "00");
+
+  ctx.fillStyle = f;
+  ctx.fill();
+}
+
+/* ===================== INTERFACE ===================== */
+const STEPS = [
+  "ping",
+  "down",
+  "up"
+];
+
+function setStep(cur) {
+  const ci = STEPS.indexOf(cur);
+
+  STEPS.forEach((k, i) => {
+    $(`[data-step=${k}]`).className =
+      cur === "end" || i < ci
+        ? "done"
+        : i === ci
+          ? "active"
+          : "";
+  });
+}
+
+const setStatus = t =>
+  $("#status").textContent = t;
+
+function showNotice(m) {
+  const n = $("#notice");
+  n.textContent = m;
+  n.hidden = false;
+}
+
+function renderMetrics() {
+  const r = S.res;
+
+  const set = (id, v) =>
+    $(id).textContent = v;
+
+  set(
+    "#mPing",
+    r.ping != null
+      ? r.ping.toFixed(0)
+      : "--"
+  );
+
+  set(
+    "#mJit",
+    r.jitter != null
+      ? r.jitter.toFixed(1)
+      : "--"
+  );
+
+  set(
+    "#mDown",
+    r.down != null
+      ? fmt(r.down)
+      : "--"
+  );
+
+  set(
+    "#mUp",
+    r.up != null
+      ? fmt(r.up)
+      : "--"
+  );
+
+  $$(".u").forEach(
+    e => e.textContent = S.unit
+  );
+}
+
+function showPhaseStats(cur, avg) {
+  $("#stCur").textContent = fmt(cur);
+  $("#stAvg").textContent = fmt(avg);
+  $("#stMax").textContent = fmt(S.max);
+}
+
+function resetUI() {
+  S.res = {};
+  S.samples = [];
+  S.max = 0;
+
+  /* reseta também a memória da suavização */
+  S.smoothWindow = [];
+  S.smoothValue = 0;
+
+  renderMetrics();
+  drawChart();
+  setStep("");
+
+  /*
+   * Reinicia diretamente em 0.
+   * Não existe mais a animação 0 → 1000 → 0.
+   */
+  updateSpeedometer(0, true);
+
+  [
+    "#stCur",
+    "#stAvg",
+    "#stMax"
+  ].forEach(s =>
+    $(s).textContent = "--"
+  );
+
+  $("#chartTitle").textContent =
+    "Velocidade em tempo real";
+
+  $("#notice").hidden =
+    $("#infoCard").hidden =
+    $("#qWrap").hidden = true;
+
+  document.body.classList.remove(
+    "done-glow"
+  );
+}
+
+function setButton(txt, busy) {
+  const b = $("#startBtn");
+
+  b.textContent = txt;
+  b.disabled = busy;
+
+  document.body.classList.toggle(
+    "testing",
+    busy
+  );
+}
+
+/* ===================== SUAVIZAÇÃO ===================== */
+
+/*
+ * Mediana elimina valores isolados muito altos/baixos.
+ *
+ * Exemplo:
+ * 300, 305, 309, 1200, 302
+ *
+ * O 1200 é tratado como pico isolado.
+ */
+function median(values) {
+  if (!values.length)
+    return 0;
+
+  const a = [...values].sort(
+    (x, y) => x - y
+  );
+
+  const mid = Math.floor(a.length / 2);
+
+  return a.length % 2
+    ? a[mid]
+    : (a[mid - 1] + a[mid]) / 2;
+}
+
+/*
+ * Combina:
+ * 1. janela de mediana
+ * 2. suavização exponencial
+ *
+ * Resultado:
+ * a medição visual não oscila brutalmente.
+ */
+function stabilizeThroughput(raw) {
+  const WINDOW = 5;
+  const EMA = 0.28;
+
+  S.smoothWindow.push(
+    Math.max(0, raw)
+  );
+
+  if (
+    S.smoothWindow.length >
+    WINDOW
+  ) {
+    S.smoothWindow.shift();
+  }
+
+  const med = median(
+    S.smoothWindow
+  );
+
+  if (!S.smoothValue) {
+    S.smoothValue = med;
+  } else {
+    S.smoothValue =
+      S.smoothValue * (1 - EMA) +
+      med * EMA;
+  }
+
+  return S.smoothValue;
+}
+
+/* ===================== TESTE ===================== */
+async function startSpeedTest() {
+  if (S.running)
+    return;
+
+  if (!window.fetch || !window.performance) {
+    return showNotice(
+      "Seu navegador não tem suporte às APIs necessárias (fetch / performance). Atualize ou troque de navegador."
+    );
+  }
+
+  if (navigator.onLine === false) {
+    return showNotice(
+      "Você parece estar sem conexão com a internet. Conecte-se e tente novamente."
+    );
+  }
+
+  S.running = true;
+
+  resetUI();
+  setButton("TESTANDO...", true);
+
+  try {
+    setStatus("Preparando teste...");
+
+    const metaP = loadMeta();
+
+    /*
+     * Antes havia:
+     *
+     * updateSpeedometer(1000);
+     * await sleep(...);
+     * updateSpeedometer(0);
+     *
+     * Isso causava o pico artificial.
+     *
+     * Agora o ponteiro permanece em 0.
+     */
+    await prepare();
+
+    setStep("ping");
+    setStatus("Medindo ping...");
+    await measurePing();
+
+    setStep("down");
+    setStatus("Testando download...");
+    await measureDownload();
+
+    setStep("up");
+    setStatus("Testando upload...");
+    await measureUpload();
+
+    setStep("end");
+    setStatus("Finalizando...");
+
+    await metaP;
+    await sleep(
+      reduced() ? 50 : 450
+    );
+
+    showResults();
+    saveResult();
+
+    setStatus("Teste concluído");
+    setButton(
+      "TESTAR NOVAMENTE",
+      false
+    );
+
+  } catch (e) {
+    showNotice(
+      e.message ||
+      "Não foi possível concluir a medição. Verifique sua conexão e tente novamente."
+    );
+
+    setStep("");
+    updateSpeedometer(0);
+
+    setStatus("Teste interrompido");
+
+    setButton(
+      "TENTAR NOVAMENTE",
+      false
+    );
+
+  } finally {
+    S.running = false;
+  }
+}
+
+async function prepare() {
+  /*
+   * Pequeno tempo de preparação visual.
+   * O ponteiro permanece em 0 durante toda essa fase.
+   */
+  updateSpeedometer(0, true);
+
+  await sleep(
+    reduced() ? 60 : 350
+  );
+}
+
+function fail(step, e) {
+  const m =
+    e && e.name === "AbortError"
+      ? `Tempo esgotado na etapa de ${step}. Verifique sua conexão e tente novamente.`
+      : e instanceof TypeError
+        ? `Falha na etapa de ${step}: o endpoint está indisponível, foi bloqueado por CORS ou você está sem conexão. Confira SPEED_TEST_CONFIG e a rede.`
+        : "Não foi possível concluir a medição. Verifique sua conexão e tente novamente.";
+
+  return new Error(m);
+}
+
+const fetchT = (url, ms) => {
+  const c = new AbortController();
+
+  const t = setTimeout(
+    () => c.abort(),
+    ms
+  );
+
+  return fetch(
+    bust(url),
+    {
+      cache: "no-store",
+      signal: c.signal
+    }
+  ).finally(() =>
+    clearTimeout(t)
+  );
+};
+
+async function loadMeta() {
+  if (!CFG.metaUrl)
+    return;
+
+  try {
+    S.meta =
+      await (
+        await fetchT(
+          CFG.metaUrl,
+          CFG.timeout
+        )
+      ).json();
+
+  } catch {
+    S.meta = null;
+  }
+}
+
+/* ===================== PING ===================== */
+async function measurePing() {
+  const t = [];
+
+  try {
+    for (
+      let i = 0;
+      i < CFG.pingCount;
+      i++
+    ) {
+      const a = performance.now();
+
+      const r = await fetchT(
+        CFG.pingUrl,
+        CFG.timeout
+      );
+
+      await r.arrayBuffer();
+
+      const d =
+        performance.now() - a;
+
+      if (i > 0)
+        t.push(d);
+
+      if (t.length) {
+        S.res.ping =
+          [...t].sort(
+            (x, y) => x - y
+          )[Math.floor(t.length / 2)];
+
+        S.res.jitter =
+          t.length > 1
+            ? t.slice(1).reduce(
+                (s, x, j) =>
+                  s +
+                  Math.abs(
+                    x - t[j]
+                  ),
+                0
+              ) /
+              (t.length - 1)
+            : 0;
+
+        renderMetrics();
+      }
+
+      await sleep(80);
+    }
+
+  } catch (e) {
+    throw fail("ping", e);
+  }
+}
+
+/* ===================== DOWNLOAD ===================== */
+async function dlWorker(st) {
+  while (
+    !st.ac.signal.aborted
+  ) {
+    try {
+      const r = await fetch(
+        bust(CFG.downloadUrl),
+        {
+          cache: "no-store",
+          signal: st.ac.signal
+        }
+      );
+
+      if (!r.ok)
+        throw new Error(
+          "HTTP " + r.status
+        );
+
+      if (
+        r.body &&
+        r.body.getReader
+      ) {
+        const rd =
+          r.body.getReader();
+
+        for (;;) {
+          const {
+            done,
+            value
+          } = await rd.read();
+
+          if (done)
+            break;
+
+          st.bytes +=
+            value.length;
+        }
+
+      } else {
+        st.bytes +=
+          (
+            await r.arrayBuffer()
+          ).byteLength;
+      }
+
+    } catch (e) {
+      if (!st.ac.signal.aborted)
+        st.fail = e;
+
+      return;
+    }
+  }
+}
+
+/* ===================== UPLOAD ===================== */
+let PAYLOAD;
+
+async function ulWorker(st) {
+  if (!PAYLOAD) {
+    const c =
+      crypto.getRandomValues(
+        new Uint8Array(65536)
+      );
+
+    const a =
+      new Uint8Array(
+        65536 * 64
+      );
+
+    for (
+      let i = 0;
+      i < 64;
+      i++
+    ) {
+      a.set(
+        c,
+        i * 65536
+      );
+    }
+
+    PAYLOAD =
+      new Blob([a]);
+  }
+
+  while (
+    !st.ac.signal.aborted &&
+    !st.fail
+  ) {
+    await new Promise(res => {
+      const x =
+        new XMLHttpRequest();
+
+      let last = 0;
+
+      st.xhrs.push(x);
+
+      x.open(
+        "POST",
+        bust(CFG.uploadUrl)
+      );
+
+      x.timeout =
+        CFG.timeout * 3;
+
+      x.upload.onprogress = e => {
+        st.bytes +=
+          e.loaded - last;
+
+        last = e.loaded;
+      };
+
+      x.onerror = () => {
+        if (!st.ac.signal.aborted) {
+          st.fail =
+            new TypeError(
+              "upload"
+            );
+        }
+
+        res();
+      };
+
+      x.onload = () => {
+        if (x.status >= 400) {
+          st.fail =
+            new Error(
+              "HTTP " + x.status
+            );
+        }
+
+        res();
+      };
+
+      x.onabort =
+        x.ontimeout = () =>
+          res();
+
+      x.send(PAYLOAD);
+    });
+  }
+}
+
+/* ===================== THROUGHPUT ===================== */
+async function measureThroughput(
+  key,
+  worker
+) {
+  const st = {
+    bytes: 0,
+    fail: null,
+    ac: new AbortController(),
+    xhrs: []
+  };
+
+  S.samples = [];
+  S.max = 0;
+
+  /* reinicia suavização de cada etapa */
+  S.smoothWindow = [];
+  S.smoothValue = 0;
+
+  drawChart();
+
+  const t0 = performance.now();
+
+  let lt = t0;
+  let lb = 0;
+
+  let cur = 0;
+
+  let wb = 0;
+  let wt = t0;
+
+  let warm = false;
+
+  let sum = 0;
+  let n = 0;
+
+  for (
+    let i = 0;
+    i < CFG.streams;
+    i++
+  ) {
+    worker(st);
+  }
+
+  await new Promise(res => {
+    const id =
+      setInterval(() => {
+        const now =
+          performance.now();
+
+        const b =
+          st.bytes;
+
+        const elapsed =
+          now - lt;
+
+        /*
+         * Velocidade instantânea real.
+         */
+        const inst =
+          elapsed > 0
+            ? (b - lb) *
+              8 /
+              (1e3 * elapsed)
+            : 0;
+
+        lt = now;
+        lb = b;
+
+        /*
+         * Primeiro remove picos isolados,
+         * depois suaviza.
+         */
+        const stable =
+          stabilizeThroughput(
+            inst
+          );
+
+        /*
+         * Cur representa o valor visual
+         * estável utilizado no medidor.
+         *
+         * Isso evita que um pacote isolado,
+         * mudança de buffer ou rajada de dados
+         * cause um pico enorme na interface.
+         */
+        cur = stable;
+
+        /*
+         * Ignora o primeiro segundo
+         * para as estatísticas de fase.
+         */
+        if (
+          !warm &&
+          now - t0 > 1000
+        ) {
+          warm = true;
+          wb = b;
+          wt = now;
+        }
+
+        S.max = Math.max(
+          S.max,
+          cur
+        );
+
+        if (warm) {
+          sum += cur;
+          n++;
+        }
+
+        /*
+         * A interface recebe somente
+         * o valor estabilizado.
+         */
+        S.res[key] = cur;
+
+        renderMetrics();
+
+        updateSpeedometer(cur);
+
+        updateChart(cur);
+
+        showPhaseStats(
+          cur,
+          n ? sum / n : cur
+        );
+
+        if (
+          now - t0 >=
+            CFG.duration ||
+          (st.fail && !b)
+        ) {
+          clearInterval(id);
+          res();
+        }
+
+      }, SAMPLE_MS);
+  });
+
+  st.ac.abort();
+
+  st.xhrs.forEach(
+    x => x.abort()
+  );
+
+  if (!st.bytes) {
+    throw (
+      st.fail ||
+      new TypeError("sem dados")
+    );
+  }
+
+  /*
+   * Resultado final continua sendo
+   * calculado diretamente pelos bytes reais.
+   * A suavização serve apenas para a interface.
+   */
+  const now =
+    performance.now();
+
+  return warm
+    ? (st.bytes - wb) *
+      8 /
+      (1e3 * (now - wt))
+    : st.bytes *
+      8 /
+      (1e3 * (now - t0));
+}
+
+async function measureDownload() {
+  $("#chartTitle").textContent =
+    "Download em tempo real (" +
+    S.unit +
+    ")";
+
+  try {
+    S.res.down =
+      await measureThroughput(
+        "down",
+        dlWorker
+      );
+
+  } catch (e) {
+    throw fail(
+      "download",
+      e
+    );
+  }
+
+  renderMetrics();
+}
+
+async function measureUpload() {
+  $("#chartTitle").textContent =
+    "Upload em tempo real (" +
+    S.unit +
+    ")";
+
+  try {
+    S.res.up =
+      await measureThroughput(
+        "up",
+        ulWorker
+      );
+
+  } catch (e) {
+    throw fail(
+      "upload",
+      e
+    );
+  }
+
+  renderMetrics();
+}
+
+/* ===================== RESULTADOS ===================== */
+function countTo(
+  sel,
+  to,
+  dec
+) {
+  const el = $(sel);
+
+  if (reduced()) {
+    el.textContent =
+      to.toFixed(dec);
+
+    return;
+  }
+
+  const t0 =
+    performance.now();
+
+  const D = 1100;
+
+  (function f(n) {
+    const p =
+      Math.min(
+        1,
+        (n - t0) / D
+      );
+
+    el.textContent =
+      (
+        to *
+        (1 -
+          Math.pow(
+            1 - p,
+            3
+          ))
+      ).toFixed(dec);
+
+    if (p < 1)
+      requestAnimationFrame(f);
+
+  })(t0);
+}
+
+function showResults() {
+  const r = S.res;
+
+  /*
+   * O valor final também chega suavemente
+   * ao resultado, sem "teleporte".
+   */
+  updateSpeedometer(r.down);
+
+  countTo(
+    "#mDown",
+    conv(r.down),
+    2
+  );
+
+  countTo(
+    "#mUp",
+    conv(r.up),
+    2
+  );
+
+  countTo(
+    "#mPing",
+    r.ping,
+    0
+  );
+
+  countTo(
+    "#mJit",
+    r.jitter,
+    1
+  );
+
+  $$(".tile").forEach(t => {
+    t.classList.remove("glow");
+    void t.offsetWidth;
+    t.classList.add("glow");
+  });
+
+  document.body.classList.add(
+    "done-glow"
+  );
+
+  const l =
+    r.down >= 100 &&
+    r.ping < 30
+      ? "excelente"
+      : r.down >= 25 &&
+        r.ping < 80
+        ? "boa"
+        : r.down >= 5 &&
+          r.ping < 150
+          ? "regular"
+          : "baixa";
+
+  const q = $("#quality");
+
+  q.dataset.l = l;
+  q.textContent =
+    l.toUpperCase();
+
+  $("#qWrap").hidden = false;
+
+  renderInfo();
+
+  $("#infoCard").hidden = false;
+}
+
+function renderInfo() {
+  const c =
+    navigator.connection || {};
+
+  const m =
+    S.meta || {};
+
+  const r =
+    S.res;
+
+  const colo =
+    m.colo &&
+    typeof m.colo === "object"
+      ? (
+          m.colo.city ||
+          m.colo.iata
+        )
+      : m.colo;
+
+  let host = "";
+
+  try {
+    host =
+      new URL(
+        CFG.downloadUrl
+      ).hostname;
+  } catch {}
+
+  const rows = [
+    ["IP público", m.clientIp],
+    [
+      "Servidor",
+      [m.city, colo]
+        .filter(Boolean)
+        .join(" · ") ||
+        host
+    ],
+    [
+      "Tipo de conexão",
+      c.type
+    ],
+    [
+      "Tecnologia estimada",
+      c.effectiveType &&
+        c.effectiveType.toUpperCase()
+    ],
+    [
+      "RTT (navegador)",
+      c.rtt != null &&
+        c.rtt + " ms"
+    ],
+    [
+      "Downlink (navegador)",
+      c.downlink != null &&
+        c.downlink + " Mbps"
+    ],
+    [
+      "Economia de dados",
+      c.saveData != null &&
+        (
+          c.saveData
+            ? "Ativada"
+            : "Desativada"
+        )
+    ],
+    [
+      "Latência",
+      r.ping.toFixed(0) +
+        " ms"
+    ],
+    [
+      "Jitter",
+      r.jitter.toFixed(1) +
+        " ms"
+    ],
+    [
+      "Download",
+      fmt(r.down) +
+        " " +
+        S.unit
+    ],
+    [
+      "Upload",
+      fmt(r.up) +
+        " " +
+        S.unit
+    ]
+  ];
+
+  $("#info").innerHTML =
+    rows
+      .map(
+        ([k, v]) =>
+          `<div>
+            <dt>${k}</dt>
+            <dd>${v ? clean(v) : "Não disponível"}</dd>
+          </div>`
+      )
+      .join("");
+}
+
+/* ===================== HISTÓRICO ===================== */
+const HK =
+  "netspeed.history";
+
+function saveResult() {
+  const h =
+    store.get(HK, []);
+
+  h.unshift({
+    t: Date.now(),
+    d: S.res.down,
+    u: S.res.up,
+    p: S.res.ping
+  });
+
+  store.set(
+    HK,
+    h.slice(0, 10)
+  );
+
+  loadHistory();
+}
+
+function loadHistory() {
+  const h =
+    store.get(HK, []);
+
+  $("#hist").innerHTML =
+    Array.isArray(h) &&
+    h.length
+      ? h
+          .map(x => {
+            const d =
+              new Date(x.t);
+
+            return `
+              <li>
+                <time datetime="${d.toISOString()}">
+                  ${d.toLocaleDateString("pt-BR")}
+                  —
+                  ${d.toLocaleTimeString(
+                    "pt-BR",
+                    {
+                      hour: "2-digit",
+                      minute: "2-digit"
+                    }
+                  )}
+                </time>
+
+                <span>
+                  ↓ ${conv(x.d).toFixed(0)}
+                  ${S.unit}
+                </span>
+
+                <span>
+                  ↑ ${conv(x.u).toFixed(0)}
+                  ${S.unit}
+                </span>
+
+                <span>
+                  ◉ ${Number(x.p).toFixed(0)}
+                  ms
+                </span>
+              </li>
+            `;
+          })
+          .join("")
+
+      : '<li class="empty">Nenhum teste salvo ainda. Faça o primeiro teste!</li>';
+}
+
+function clearHistory() {
+  store.set(HK, []);
+  loadHistory();
+}
+
+initializeApp();
+</script></body>
+</html>writing{variant="document" title="NetSpeed — medidor suavizado e sem pico inicial" id="58321"}
 <!DOCTYPE html>
 <html lang="pt-BR" data-theme="light">
 <head>
@@ -52,7 +1772,7 @@ h2{font-size:1.05rem;letter-spacing:-.01em}
 #speedVal{display:block;font-size:clamp(2.2rem,10vw,3.5rem);font-weight:750;letter-spacing:-.03em;line-height:1;font-variant-numeric:tabular-nums}
 #unit{color:var(--muted);font-size:.95rem}
 #status{font-size:.9rem;font-weight:600;margin-top:4px}
-.testing .gauge{animation:pulse 1.6s ease-in-out infinite}
+.testing .gauge{animation:pulse 1.8s ease-in-out infinite}
 .done-glow #arc{animation:glow 1.4s}
 .cta{display:block;margin:14px auto 22px;width:min(100%,320px);padding:18px 24px;border:0;border-radius:999px;cursor:pointer;color:#fff;font-weight:750;font-size:1.1rem;letter-spacing:.06em;background:linear-gradient(135deg,var(--accent),var(--primary));box-shadow:0 10px 30px color-mix(in srgb,var(--primary) 45%,transparent);transition:transform .25s,box-shadow .25s,opacity .25s}
 .cta:hover:not(:disabled){transform:translateY(-3px) scale(1.02);box-shadow:0 16px 40px color-mix(in srgb,var(--primary) 55%,transparent)}
@@ -84,6 +1804,7 @@ canvas{width:100%;height:190px;display:block}
 #hist time{flex-basis:100%;color:var(--muted);font-size:.8rem}
 #hist .empty{color:var(--muted)}
 .foot{color:var(--muted);font-size:.8rem;text-align:center;padding:8px 0 40px}
+
 /* ===== Configurações ===== */
 dialog{margin:auto;width:min(420px,calc(100% - 32px));border:1px solid var(--border);border-radius:24px;padding:0;background:var(--bg);color:var(--text);box-shadow:var(--shadow)}
 dialog[open]{animation:pop .3s}
@@ -94,6 +1815,7 @@ dialog .seg .lb{display:inline!important}
 select{padding:8px 10px;border-radius:10px;border:1px solid var(--border);background:var(--surface)}
 input[type=checkbox]{width:22px;height:22px;accent-color:var(--primary)}
 @media(max-width:560px){.seg .lb{display:none}.logo{font-size:1.1rem}.card{border-radius:20px}.steps li{font-size:.8rem;gap:4px}}
+
 /* ===== Animações ===== */
 @keyframes rise{from{opacity:0;transform:translateY(14px)}}
 @keyframes pop{from{opacity:0;transform:scale(.7)}}
@@ -104,346 +1826,5140 @@ input[type=checkbox]{width:22px;height:22px;accent-color:var(--primary)}
 [data-motion=off] *,[data-motion=off] *::before{animation:none!important;transition:none!important}
 </style>
 </head>
+
 <body>
-<header><div class="wrap bar">
-  <a class="logo" href="./" aria-label="Início"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M13 2 4 14h6l-1 8 9-12h-6z"/></svg><span id="appName">NetSpeed</span></a>
-  <div class="tools"><div class="seg" data-themeseg role="group" aria-label="Tema"></div>
-  <button class="icon" id="openSettings" aria-label="Abrir configurações">⚙</button></div>
-</div></header>
+<header>
+  <div class="wrap bar">
+    <a class="logo" href="./" aria-label="Início">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M13 2 4 14h6l-1 8 9-12h-6z"/>
+      </svg>
+      <span id="appName">NetSpeed</span>
+    </a>
+
+    <div class="tools">
+      <div class="seg" data-themeseg role="group" aria-label="Tema"></div>
+      <button class="icon" id="openSettings" aria-label="Abrir configurações">⚙</button>
+    </div>
+  </div>
+</header>
 
 <main class="wrap" id="app">
-  <div class="intro"><h1>Teste a velocidade da sua conexão</h1><p>Latência, download e upload medidos de verdade, direto no navegador.</p></div>
+  <div class="intro">
+    <h1>Teste a velocidade da sua conexão</h1>
+    <p>Latência, download e upload medidos de verdade, direto no navegador.</p>
+  </div>
+
   <p id="notice" class="notice" role="alert" hidden></p>
 
   <div class="grid a">
     <section class="card" aria-label="Teste de velocidade">
       <div class="gauge">
         <svg viewBox="0 0 300 300" role="img" aria-label="Velocímetro circular. Os valores em texto estão sempre disponíveis nos resultados.">
-          <defs><linearGradient id="g" x1="0" y1="1" x2="1" y2="0"><stop offset="0" style="stop-color:var(--accent)"/><stop offset="1" style="stop-color:var(--primary)"/></linearGradient></defs>
+          <defs>
+            <linearGradient id="g" x1="0" y1="1" x2="1" y2="0">
+              <stop offset="0" style="stop-color:var(--accent)"/>
+              <stop offset="1" style="stop-color:var(--primary)"/>
+            </linearGradient>
+          </defs>
+
           <circle class="dash" cx="150" cy="150" r="146"/>
           <circle id="track" cx="150" cy="150" r="118" transform="rotate(135 150 150)"/>
           <circle id="arc" cx="150" cy="150" r="118" transform="rotate(135 150 150)"/>
           <g id="ticks"></g>
-          <g id="needle"><line x1="150" y1="150" x2="150" y2="62"/><circle cx="150" cy="150" r="8"/></g>
+
+          <g id="needle">
+            <line x1="150" y1="150" x2="150" y2="62"/>
+            <circle cx="150" cy="150" r="8"/>
+          </g>
         </svg>
-        <div class="readout"><output id="speedVal">0.00</output><span id="unit">Mbps</span><p id="status" role="status" aria-live="polite">Pronto para testar</p></div>
+
+        <div class="readout">
+          <output id="speedVal">0.00</output>
+          <span id="unit">Mbps</span>
+          <p id="status" role="status" aria-live="polite">Pronto para testar</p>
+        </div>
       </div>
+
       <button class="cta" id="startBtn">INICIAR TESTE</button>
+
       <ol class="steps" aria-label="Etapas do teste">
-        <li data-step="ping"><i class="dot"></i>Ping</li><li data-step="down"><i class="dot"></i>Download</li><li data-step="up"><i class="dot"></i>Upload</li>
+        <li data-step="ping"><i class="dot"></i>Ping</li>
+        <li data-step="down"><i class="dot"></i>Download</li>
+        <li data-step="up"><i class="dot"></i>Upload</li>
       </ol>
     </section>
 
     <div class="side">
       <section class="card">
-        <div class="ch"><h2 id="chartTitle">Velocidade em tempo real</h2></div>
+        <div class="ch">
+          <h2 id="chartTitle">Velocidade em tempo real</h2>
+        </div>
+
         <canvas id="chart" role="img" aria-label="Gráfico da velocidade ao longo do tempo"></canvas>
-        <dl class="stats"><div><dt>Atual</dt><dd id="stCur">--</dd></div><div><dt>Média</dt><dd id="stAvg">--</dd></div><div><dt>Máxima</dt><dd id="stMax">--</dd></div></dl>
+
+        <dl class="stats">
+          <div><dt>Atual</dt><dd id="stCur">--</dd></div>
+          <div><dt>Média</dt><dd id="stAvg">--</dd></div>
+          <div><dt>Máxima</dt><dd id="stMax">--</dd></div>
+        </dl>
       </section>
+
       <section class="card">
         <h2>Resultado do teste</h2>
+
         <div class="tiles">
-          <div class="tile"><span class="k">↓ Download</span><b><output id="mDown">--</output> <small class="u">Mbps</small></b></div>
-          <div class="tile"><span class="k">↑ Upload</span><b><output id="mUp">--</output> <small class="u">Mbps</small></b></div>
-          <div class="tile"><span class="k">◉ Ping</span><b><output id="mPing">--</output> <small>ms</small></b></div>
-          <div class="tile"><span class="k">≈ Jitter</span><b><output id="mJit">--</output> <small>ms</small></b></div>
+          <div class="tile">
+            <span class="k">↓ Download</span>
+            <b><output id="mDown">--</output> <small class="u">Mbps</small></b>
+          </div>
+
+          <div class="tile">
+            <span class="k">↑ Upload</span>
+            <b><output id="mUp">--</output> <small class="u">Mbps</small></b>
+          </div>
+
+          <div class="tile">
+            <span class="k">◉ Ping</span>
+            <b><output id="mPing">--</output> <small>ms</small></b>
+          </div>
+
+          <div class="tile">
+            <span class="k">≈ Jitter</span>
+            <b><output id="mJit">--</output> <small>ms</small></b>
+          </div>
         </div>
-        <div id="qWrap" hidden><span class="q" id="quality"></span><small id="qHint">Estimativa baseada nos valores medidos; não é uma classificação absoluta.</small></div>
+
+        <div id="qWrap" hidden>
+          <span class="q" id="quality"></span>
+          <small id="qHint">Estimativa baseada nos valores medidos; não é uma classificação absoluta.</small>
+        </div>
       </section>
     </div>
   </div>
 
   <div class="grid b">
-    <section class="card" id="infoCard" hidden><h2>Informações da conexão</h2><dl class="info" id="info"></dl></section>
-    <section class="card"><div class="ch"><h2>Histórico</h2><button class="ghost" data-clear>Limpar histórico</button></div><ul id="hist"></ul></section>
+    <section class="card" id="infoCard" hidden>
+      <h2>Informações da conexão</h2>
+      <dl class="info" id="info"></dl>
+    </section>
+
+    <section class="card">
+      <div class="ch">
+        <h2>Histórico</h2>
+        <button class="ghost" data-clear>Limpar histórico</button>
+      </div>
+
+      <ul id="hist"></ul>
+    </section>
   </div>
-  <p class="foot">Medição real com fetch() e XHR nos endpoints de SPEED_TEST_CONFIG (padrão: Cloudflare). Nada é simulado. O histórico fica só neste navegador e o IP nunca é salvo. Resultados variam com Wi‑Fi, servidor e uso da rede.</p>
+
+  <p class="foot">
+    Medição real com fetch() e XHR nos endpoints de SPEED_TEST_CONFIG
+    (padrão: Cloudflare). Nada é simulado. O histórico fica só neste navegador
+    e o IP nunca é salvo. Resultados variam com Wi-Fi, servidor e uso da rede.
+  </p>
 </main>
 
-<dialog id="dlg" aria-labelledby="dlgT"><div class="dbody">
-  <div class="ch"><h2 id="dlgT">Configurações</h2><button class="icon" id="closeDlg" aria-label="Fechar">✕</button></div>
-  <div class="row"><span>Tema</span><div class="seg" data-themeseg role="group" aria-label="Tema"></div></div>
-  <label class="row"><span>Unidade de velocidade</span><select id="unitSel"><option>Mbps</option><option>MB/s</option><option>Kbps</option></select></label>
-  <label class="row"><span>Animações</span><input type="checkbox" id="animChk"></label>
-  <div class="row" style="border:0"><span>Histórico local</span><button class="ghost" data-clear>Limpar histórico</button></div>
-</div></dialog>
+<dialog id="dlg" aria-labelledby="dlgT">
+  <div class="dbody">
+    <div class="ch">
+      <h2 id="dlgT">Configurações</h2>
+      <button class="icon" id="closeDlg" aria-label="Fechar">✕</button>
+    </div>
+
+    <div class="row">
+      <span>Tema</span>
+      <div class="seg" data-themeseg role="group" aria-label="Tema"></div>
+    </div>
+
+    <label class="row">
+      <span>Unidade de velocidade</span>
+      <select id="unitSel">
+        <option>Mbps</option>
+        <option>MB/s</option>
+        <option>Kbps</option>
+      </select>
+    </label>
+
+    <label class="row">
+      <span>Animações</span>
+      <input type="checkbox" id="animChk">
+    </label>
+
+    <div class="row" style="border:0">
+      <span>Histórico local</span>
+      <button class="ghost" data-clear>Limpar histórico</button>
+    </div>
+  </div>
+</dialog>
 
 <script>
 "use strict";
-/* ===================== CONFIGURAÇÃO (edite aqui) ===================== */
+
+/* ===================== CONFIGURAÇÃO ===================== */
 const APP_NAME = "NetSpeed";
-/* Medição real: o navegador baixa/envia dados para estes endpoints.
-   Para usar seu próprio servidor, troque as URLs (precisam enviar CORS: Access-Control-Allow-Origin).
-   downloadUrl deve devolver um arquivo grande; uploadUrl deve aceitar POST; pingUrl deve responder rápido. */
+
 const SPEED_TEST_CONFIG = {
   downloadUrl: "https://speed.cloudflare.com/__down?bytes=50000000",
   uploadUrl: "https://speed.cloudflare.com/__up",
   pingUrl: "https://speed.cloudflare.com/__down?bytes=0",
-  metaUrl: "https://speed.cloudflare.com/meta", // opcional: IP público e servidor ("" desativa)
-  pingCount: 10, streams: 4, duration: 8000, timeout: 5000 // ms
+  metaUrl: "https://speed.cloudflare.com/meta",
+
+  pingCount: 10,
+  streams: 4,
+  duration: 8000,
+  timeout: 5000
 };
+
 const CFG = SPEED_TEST_CONFIG;
 
-/* ===================== ESTADO E UTILITÁRIOS ===================== */
-const $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAll(s)];
+/* ===================== ESTADO ===================== */
+const $ = s => document.querySelector(s);
+const $$ = s => [...document.querySelectorAll(s)];
+
 const sleep = ms => new Promise(r => setTimeout(r, ms));
-const S = { theme: "auto", unit: "Mbps", anim: true, cur: 0, target: 0, running: false, samples: [], max: 0, res: {}, meta: null };
+
+const S = {
+  theme: "auto",
+  unit: "Mbps",
+  anim: true,
+
+  cur: 0,
+  target: 0,
+
+  running: false,
+
+  samples: [],
+  max: 0,
+
+  res: {},
+  meta: null,
+
+  /* estado da suavização visual */
+  smoothWindow: [],
+  smoothValue: 0
+};
+
 const mq = window.matchMedia("(prefers-color-scheme: dark)");
-const store = { get(k, d) { try { return JSON.parse(localStorage.getItem(k)) ?? d } catch { return d } }, set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)) } catch {} } };
-const reduced = () => !S.anim || matchMedia("(prefers-reduced-motion: reduce)").matches;
-const conv = v => S.unit === "MB/s" ? v / 8 : S.unit === "Kbps" ? v * 1000 : v; // valores internos sempre em Mbps
+
+const store = {
+  get(k, d) {
+    try {
+      return JSON.parse(localStorage.getItem(k)) ?? d;
+    } catch {
+      return d;
+    }
+  },
+
+  set(k, v) {
+    try {
+      localStorage.setItem(k, JSON.stringify(v));
+    } catch {}
+  }
+};
+
+const reduced = () =>
+  !S.anim || matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+const conv = v =>
+  S.unit === "MB/s" ? v / 8 :
+  S.unit === "Kbps" ? v * 1000 :
+  v;
+
 const fmt = v => conv(v).toFixed(2);
-const bust = u => u + (u.includes("?") ? "&" : "?") + "r=" + Math.random().toString(36).slice(2);
+
+const bust = u =>
+  u + (u.includes("?") ? "&" : "?") + "r=" +
+  Math.random().toString(36).slice(2);
+
 const clean = v => String(v).replace(/[<>&"']/g, "");
-const persist = () => store.set("netspeed.settings", { theme: S.theme, unit: S.unit, anim: S.anim });
+
+const persist = () =>
+  store.set("netspeed.settings", {
+    theme: S.theme,
+    unit: S.unit,
+    anim: S.anim
+  });
 
 /* ===================== INICIALIZAÇÃO ===================== */
 function initializeApp() {
-  document.title = APP_NAME + " — Teste de velocidade"; $("#appName").textContent = APP_NAME;
+  document.title = APP_NAME + " — Teste de velocidade";
+  $("#appName").textContent = APP_NAME;
+
   const saved = store.get("netspeed.settings", {});
-  if (["light", "dark", "auto"].includes(saved.theme)) S.theme = saved.theme;
-  if (["Mbps", "MB/s", "Kbps"].includes(saved.unit)) S.unit = saved.unit;
-  if (typeof saved.anim === "boolean") S.anim = saved.anim;
-  $("#unitSel").value = S.unit; $("#animChk").checked = S.anim; applyMotion();
-  initializeTheme(); initializeSpeedometer(); initializeChart(); refreshUnits(); loadHistory();
+
+  if (["light", "dark", "auto"].includes(saved.theme))
+    S.theme = saved.theme;
+
+  if (["Mbps", "MB/s", "Kbps"].includes(saved.unit))
+    S.unit = saved.unit;
+
+  if (typeof saved.anim === "boolean")
+    S.anim = saved.anim;
+
+  $("#unitSel").value = S.unit;
+  $("#animChk").checked = S.anim;
+
+  applyMotion();
+  initializeTheme();
+  initializeSpeedometer();
+  initializeChart();
+  refreshUnits();
+  loadHistory();
+
   const dlg = $("#dlg");
+
   $("#startBtn").onclick = startSpeedTest;
+
   $("#openSettings").onclick = () => dlg.showModal();
+
   $("#closeDlg").onclick = () => dlg.close();
-  dlg.onclick = e => { if (e.target === dlg) dlg.close() }; // clique fora (ESC já é nativo)
-  $("#unitSel").onchange = e => { S.unit = e.target.value; persist(); refreshUnits() };
-  $("#animChk").onchange = e => { S.anim = e.target.checked; persist(); applyMotion() };
+
+  dlg.onclick = e => {
+    if (e.target === dlg) dlg.close();
+  };
+
+  $("#unitSel").onchange = e => {
+    S.unit = e.target.value;
+    persist();
+    refreshUnits();
+  };
+
+  $("#animChk").onchange = e => {
+    S.anim = e.target.checked;
+    persist();
+    applyMotion();
+  };
+
   document.addEventListener("click", e => {
     const b = e.target.closest("[data-tc]");
-    if (b) { S.theme = b.dataset.tc; persist(); applyTheme() }
-    if (e.target.closest("[data-clear]") && confirm("Apagar todo o histórico de testes? Esta ação não pode ser desfeita.")) clearHistory();
+
+    if (b) {
+      S.theme = b.dataset.tc;
+      persist();
+      applyTheme();
+    }
+
+    if (
+      e.target.closest("[data-clear]") &&
+      confirm("Apagar todo o histórico de testes? Esta ação não pode ser desfeita.")
+    ) {
+      clearHistory();
+    }
   });
 }
-function applyMotion() { document.documentElement.dataset.motion = S.anim ? "on" : "off" }
+
+function applyMotion() {
+  document.documentElement.dataset.motion = S.anim ? "on" : "off";
+}
+
 function refreshUnits() {
-  $("#unit").textContent = S.unit; renderMetrics(); loadHistory(); updateSpeedometer(S.target, true);
-  if (!$("#infoCard").hidden) renderInfo();
+  $("#unit").textContent = S.unit;
+
+  renderMetrics();
+  loadHistory();
+
+  /* apenas sincroniza o valor atual, sem criar movimento */
+  updateSpeedometer(S.target, true);
+
+  if (!$("#infoCard").hidden)
+    renderInfo();
 }
 
 /* ===================== TEMA ===================== */
 function initializeTheme() {
-  $$("[data-themeseg]").forEach(el => el.innerHTML = [["light", "☀️", "Claro"], ["dark", "🌙", "Escuro"], ["auto", "⚙️", "Automático"]]
-    .map(([k, i, l]) => `<button data-tc="${k}" title="${l}" aria-label="${l}"><span aria-hidden="true">${i}</span> <span class="lb">${l}</span></button>`).join(""));
-  mq.addEventListener("change", () => S.theme === "auto" && applyTheme()); // acompanha o sistema
+  $$("[data-themeseg]").forEach(el => {
+    el.innerHTML = [
+      ["light", "☀️", "Claro"],
+      ["dark", "🌙", "Escuro"],
+      ["auto", "⚙️", "Automático"]
+    ]
+      .map(
+        ([k, i, l]) =>
+          `<button data-tc="${k}" title="${l}" aria-label="${l}">
+            <span aria-hidden="true">${i}</span>
+            <span class="lb">${l}</span>
+          </button>`
+      )
+      .join("");
+  });
+
+  mq.addEventListener("change", () =>
+    S.theme === "auto" && applyTheme()
+  );
+
   applyTheme();
 }
+
 function applyTheme() {
-  document.documentElement.dataset.theme = S.theme === "dark" || (S.theme === "auto" && mq.matches) ? "dark" : "light";
-  $$("[data-tc]").forEach(b => b.setAttribute("aria-pressed", b.dataset.tc === S.theme));
+  document.documentElement.dataset.theme =
+    S.theme === "dark" ||
+    (S.theme === "auto" && mq.matches)
+      ? "dark"
+      : "light";
+
+  $$("[data-tc]").forEach(b =>
+    b.setAttribute(
+      "aria-pressed",
+      b.dataset.tc === S.theme
+    )
+  );
+
   drawChart();
 }
 
 /* ===================== VELOCÍMETRO ===================== */
-const R = 118, CIRC = 2 * Math.PI * R, ARC = CIRC * .75, MARKS = [0, 5, 10, 25, 50, 100, 250, 500, 1000];
-const frac = v => Math.min(1, Math.log10(1 + Math.max(0, v)) / Math.log10(1001)); // escala logarítmica (Mbps)
+const R = 118;
+const CIRC = 2 * Math.PI * R;
+const ARC = CIRC * 0.75;
+
+const MARKS = [
+  0, 5, 10, 25, 50, 100, 250, 500, 1000
+];
+
+/*
+ * O ponteiro utiliza escala logarítmica:
+ * 0 → começo
+ * 1000 → final
+ */
+const frac = v =>
+  Math.min(
+    1,
+    Math.log10(1 + Math.max(0, v)) /
+    Math.log10(1001)
+  );
+
+/*
+ * Suavização do ponteiro.
+ *
+ * Quanto menor o valor, mais "pesado" fica o ponteiro.
+ * 0.09 = movimento bem suave.
+ */
+const NEEDLE_EASE = 0.09;
+
 let raf = 0;
+
 function initializeSpeedometer() {
-  $("#ticks").innerHTML = MARKS.map(m => { const a = (-135 + frac(m) * 270) * Math.PI / 180; return `<text x="${150 + 134 * Math.sin(a)}" y="${153 - 134 * Math.cos(a)}" text-anchor="middle">${m}</text>` }).join("");
-  $("#track").setAttribute("stroke-dasharray", `${ARC} ${CIRC}`);
+  $("#ticks").innerHTML = MARKS.map(m => {
+    const a =
+      (-135 + frac(m) * 270) *
+      Math.PI / 180;
+
+    return `
+      <text
+        x="${150 + 134 * Math.sin(a)}"
+        y="${153 - 134 * Math.cos(a)}"
+        text-anchor="middle"
+      >${m}</text>
+    `;
+  }).join("");
+
+  $("#track").setAttribute(
+    "stroke-dasharray",
+    `${ARC} ${CIRC}`
+  );
+
+  /* começa realmente em zero */
   updateSpeedometer(0, true);
 }
-function updateSpeedometer(v, snap) { S.target = v; if (snap || reduced()) S.cur = v; cancelAnimationFrame(raf); tick() }
-function tick() { // interpolação suave até o valor alvo
-  const d = S.target - S.cur; S.cur = Math.abs(d) < .01 ? S.target : S.cur + d * .14;
+
+function updateSpeedometer(v, snap = false) {
+  S.target = Math.max(0, Number(v) || 0);
+
+  /*
+   * "snap" só é usado quando precisamos sincronizar
+   * o indicador instantaneamente, como ao resetar a UI.
+   */
+  if (snap || reduced()) {
+    S.cur = S.target;
+  }
+
+  cancelAnimationFrame(raf);
+  tick();
+}
+
+function tick() {
+  const d = S.target - S.cur;
+
+  /*
+   * Interpolação mais lenta e contínua.
+   * Isso evita que o ponteiro "teleporte" entre amostras.
+   */
+  if (Math.abs(d) < 0.01) {
+    S.cur = S.target;
+  } else {
+    S.cur += d * NEEDLE_EASE;
+  }
+
   const f = frac(S.cur);
-  $("#arc").setAttribute("stroke-dasharray", `${f * ARC} ${CIRC}`);
-  $("#needle").setAttribute("transform", `rotate(${-135 + f * 270} 150 150)`);
-  $("#speedVal").textContent = conv(S.cur).toFixed(2);
-  if (S.cur !== S.target) raf = requestAnimationFrame(tick);
+
+  $("#arc").setAttribute(
+    "stroke-dasharray",
+    `${f * ARC} ${CIRC}`
+  );
+
+  $("#needle").setAttribute(
+    "transform",
+    `rotate(${-135 + f * 270} 150 150)`
+  );
+
+  $("#speedVal").textContent =
+    conv(S.cur).toFixed(2);
+
+  if (Math.abs(S.cur - S.target) > 0.01) {
+    raf = requestAnimationFrame(tick);
+  }
 }
 
 /* ===================== GRÁFICO ===================== */
 let cv, ctx;
-function initializeChart() { cv = $("#chart"); ctx = cv.getContext("2d"); new ResizeObserver(drawChart).observe(cv) }
-function updateChart(v) { S.samples.push(v); drawChart() }
-function drawChart() {
-  if (!ctx) return;
-  const dpr = devicePixelRatio || 1, w = cv.clientWidth, h = cv.clientHeight; if (!w) return;
-  if (cv.width !== Math.round(w * dpr) || cv.height !== Math.round(h * dpr)) { cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr) }
-  ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.clearRect(0, 0, w, h);
-  const cs = getComputedStyle(document.documentElement), c1 = cs.getPropertyValue("--primary").trim(), c2 = cs.getPropertyValue("--accent").trim();
-  ctx.strokeStyle = cs.getPropertyValue("--border"); ctx.lineWidth = 1;
-  for (let i = 1; i < 4; i++) { ctx.beginPath(); ctx.moveTo(0, h * i / 4); ctx.lineTo(w, h * i / 4); ctx.stroke() }
-  const s = S.samples; if (s.length < 2) return;
-  const N = Math.ceil(CFG.duration / 150), top = Math.max(...s) * 1.2 || 1, pad = 8;
-  const P = s.map((v, i) => [i / (N - 1) * w, h - pad - v / top * (h - 2 * pad)]);
-  ctx.beginPath(); ctx.moveTo(...P[0]);
-  for (let i = 1; i < P.length - 1; i++) ctx.quadraticCurveTo(P[i][0], P[i][1], (P[i][0] + P[i + 1][0]) / 2, (P[i][1] + P[i + 1][1]) / 2);
-  const l = P[P.length - 1]; ctx.lineTo(l[0], l[1]);
-  const g = ctx.createLinearGradient(0, 0, w, 0); g.addColorStop(0, c2); g.addColorStop(1, c1);
-  ctx.strokeStyle = g; ctx.lineWidth = 2.5; ctx.lineJoin = "round"; ctx.stroke();
-  ctx.lineTo(l[0], h); ctx.lineTo(P[0][0], h); ctx.closePath();
-  const f = ctx.createLinearGradient(0, 0, 0, h); f.addColorStop(0, c1 + "55"); f.addColorStop(1, c1 + "00"); ctx.fillStyle = f; ctx.fill();
+
+const SAMPLE_MS = 200;
+
+function initializeChart() {
+  cv = $("#chart");
+  ctx = cv.getContext("2d");
+
+  new ResizeObserver(drawChart).observe(cv);
 }
 
-/* ===================== INTERFACE DO TESTE ===================== */
-const STEPS = ["ping", "down", "up"];
-function setStep(cur) { const ci = STEPS.indexOf(cur); STEPS.forEach((k, i) => $(`[data-step=${k}]`).className = cur === "end" || i < ci ? "done" : i === ci ? "active" : "") }
-const setStatus = t => $("#status").textContent = t;
-function showNotice(m) { const n = $("#notice"); n.textContent = m; n.hidden = false }
+function updateChart(v) {
+  S.samples.push(v);
+  drawChart();
+}
+
+function drawChart() {
+  if (!ctx) return;
+
+  const dpr = devicePixelRatio || 1;
+  const w = cv.clientWidth;
+  const h = cv.clientHeight;
+
+  if (!w) return;
+
+  if (
+    cv.width !== Math.round(w * dpr) ||
+    cv.height !== Math.round(h * dpr)
+  ) {
+    cv.width = Math.round(w * dpr);
+    cv.height = Math.round(h * dpr);
+  }
+
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.clearRect(0, 0, w, h);
+
+  const cs = getComputedStyle(document.documentElement);
+
+  const c1 =
+    cs.getPropertyValue("--primary").trim();
+
+  const c2 =
+    cs.getPropertyValue("--accent").trim();
+
+  ctx.strokeStyle =
+    cs.getPropertyValue("--border");
+
+  ctx.lineWidth = 1;
+
+  for (let i = 1; i < 4; i++) {
+    ctx.beginPath();
+    ctx.moveTo(0, h * i / 4);
+    ctx.lineTo(w, h * i / 4);
+    ctx.stroke();
+  }
+
+  const s = S.samples;
+
+  if (s.length < 2)
+    return;
+
+  const N = Math.ceil(
+    CFG.duration / SAMPLE_MS
+  );
+
+  const top =
+    Math.max(...s) * 1.2 || 1;
+
+  const pad = 8;
+
+  const P = s.map((v, i) => [
+    i / Math.max(1, N - 1) * w,
+    h - pad -
+      v / top * (h - 2 * pad)
+  ]);
+
+  ctx.beginPath();
+  ctx.moveTo(...P[0]);
+
+  for (
+    let i = 1;
+    i < P.length - 1;
+    i++
+  ) {
+    ctx.quadraticCurveTo(
+      P[i][0],
+      P[i][1],
+      (P[i][0] + P[i + 1][0]) / 2,
+      (P[i][1] + P[i + 1][1]) / 2
+    );
+  }
+
+  const l = P[P.length - 1];
+
+  ctx.lineTo(l[0], l[1]);
+
+  const g =
+    ctx.createLinearGradient(0, 0, w, 0);
+
+  g.addColorStop(0, c2);
+  g.addColorStop(1, c1);
+
+  ctx.strokeStyle = g;
+  ctx.lineWidth = 2.5;
+  ctx.lineJoin = "round";
+  ctx.stroke();
+
+  ctx.lineTo(l[0], h);
+  ctx.lineTo(P[0][0], h);
+  ctx.closePath();
+
+  const f =
+    ctx.createLinearGradient(0, 0, 0, h);
+
+  f.addColorStop(0, c1 + "55");
+  f.addColorStop(1, c1 + "00");
+
+  ctx.fillStyle = f;
+  ctx.fill();
+}
+
+/* ===================== INTERFACE ===================== */
+const STEPS = [
+  "ping",
+  "down",
+  "up"
+];
+
+function setStep(cur) {
+  const ci = STEPS.indexOf(cur);
+
+  STEPS.forEach((k, i) => {
+    $(`[data-step=${k}]`).className =
+      cur === "end" || i < ci
+        ? "done"
+        : i === ci
+          ? "active"
+          : "";
+  });
+}
+
+const setStatus = t =>
+  $("#status").textContent = t;
+
+function showNotice(m) {
+  const n = $("#notice");
+  n.textContent = m;
+  n.hidden = false;
+}
+
 function renderMetrics() {
-  const r = S.res, set = (id, v) => $(id).textContent = v;
-  set("#mPing", r.ping != null ? r.ping.toFixed(0) : "--"); set("#mJit", r.jitter != null ? r.jitter.toFixed(1) : "--");
-  set("#mDown", r.down != null ? fmt(r.down) : "--"); set("#mUp", r.up != null ? fmt(r.up) : "--");
-  $$(".u").forEach(e => e.textContent = S.unit);
+  const r = S.res;
+
+  const set = (id, v) =>
+    $(id).textContent = v;
+
+  set(
+    "#mPing",
+    r.ping != null
+      ? r.ping.toFixed(0)
+      : "--"
+  );
+
+  set(
+    "#mJit",
+    r.jitter != null
+      ? r.jitter.toFixed(1)
+      : "--"
+  );
+
+  set(
+    "#mDown",
+    r.down != null
+      ? fmt(r.down)
+      : "--"
+  );
+
+  set(
+    "#mUp",
+    r.up != null
+      ? fmt(r.up)
+      : "--"
+  );
+
+  $$(".u").forEach(
+    e => e.textContent = S.unit
+  );
 }
-function showPhaseStats(cur, avg) { $("#stCur").textContent = fmt(cur); $("#stAvg").textContent = fmt(avg); $("#stMax").textContent = fmt(S.max) }
+
+function showPhaseStats(cur, avg) {
+  $("#stCur").textContent = fmt(cur);
+  $("#stAvg").textContent = fmt(avg);
+  $("#stMax").textContent = fmt(S.max);
+}
+
 function resetUI() {
-  S.res = {}; S.samples = []; S.max = 0; renderMetrics(); drawChart(); setStep(""); updateSpeedometer(0, true);
-  ["#stCur", "#stAvg", "#stMax"].forEach(s => $(s).textContent = "--");
-  $("#chartTitle").textContent = "Velocidade em tempo real";
-  $("#notice").hidden = $("#infoCard").hidden = $("#qWrap").hidden = true; document.body.classList.remove("done-glow");
+  S.res = {};
+  S.samples = [];
+  S.max = 0;
+
+  /* reseta também a memória da suavização */
+  S.smoothWindow = [];
+  S.smoothValue = 0;
+
+  renderMetrics();
+  drawChart();
+  setStep("");
+
+  /*
+   * Reinicia diretamente em 0.
+   * Não existe mais a animação 0 → 1000 → 0.
+   */
+  updateSpeedometer(0, true);
+
+  [
+    "#stCur",
+    "#stAvg",
+    "#stMax"
+  ].forEach(s =>
+    $(s).textContent = "--"
+  );
+
+  $("#chartTitle").textContent =
+    "Velocidade em tempo real";
+
+  $("#notice").hidden =
+    $("#infoCard").hidden =
+    $("#qWrap").hidden = true;
+
+  document.body.classList.remove(
+    "done-glow"
+  );
 }
-function setButton(txt, busy) { const b = $("#startBtn"); b.textContent = txt; b.disabled = busy; document.body.classList.toggle("testing", busy) }
+
+function setButton(txt, busy) {
+  const b = $("#startBtn");
+
+  b.textContent = txt;
+  b.disabled = busy;
+
+  document.body.classList.toggle(
+    "testing",
+    busy
+  );
+}
+
+/* ===================== SUAVIZAÇÃO ===================== */
+
+/*
+ * Mediana elimina valores isolados muito altos/baixos.
+ *
+ * Exemplo:
+ * 300, 305, 309, 1200, 302
+ *
+ * O 1200 é tratado como pico isolado.
+ */
+function median(values) {
+  if (!values.length)
+    return 0;
+
+  const a = [...values].sort(
+    (x, y) => x - y
+  );
+
+  const mid = Math.floor(a.length / 2);
+
+  return a.length % 2
+    ? a[mid]
+    : (a[mid - 1] + a[mid]) / 2;
+}
+
+/*
+ * Combina:
+ * 1. janela de mediana
+ * 2. suavização exponencial
+ *
+ * Resultado:
+ * a medição visual não oscila brutalmente.
+ */
+function stabilizeThroughput(raw) {
+  const WINDOW = 5;
+  const EMA = 0.28;
+
+  S.smoothWindow.push(
+    Math.max(0, raw)
+  );
+
+  if (
+    S.smoothWindow.length >
+    WINDOW
+  ) {
+    S.smoothWindow.shift();
+  }
+
+  const med = median(
+    S.smoothWindow
+  );
+
+  if (!S.smoothValue) {
+    S.smoothValue = med;
+  } else {
+    S.smoothValue =
+      S.smoothValue * (1 - EMA) +
+      med * EMA;
+  }
+
+  return S.smoothValue;
+}
 
 /* ===================== TESTE ===================== */
 async function startSpeedTest() {
-  if (S.running) return;
-  if (!window.fetch || !window.performance) return showNotice("Seu navegador não tem suporte às APIs necessárias (fetch / performance). Atualize ou troque de navegador.");
-  if (navigator.onLine === false) return showNotice("Você parece estar sem conexão com a internet. Conecte-se e tente novamente.");
-  S.running = true; resetUI(); setButton("TESTANDO...", true);
+  if (S.running)
+    return;
+
+  if (!window.fetch || !window.performance) {
+    return showNotice(
+      "Seu navegador não tem suporte às APIs necessárias (fetch / performance). Atualize ou troque de navegador."
+    );
+  }
+
+  if (navigator.onLine === false) {
+    return showNotice(
+      "Você parece estar sem conexão com a internet. Conecte-se e tente novamente."
+    );
+  }
+
+  S.running = true;
+
+  resetUI();
+  setButton("TESTANDO...", true);
+
   try {
     setStatus("Preparando teste...");
-    const metaP = loadMeta(); await prepare();
-    setStep("ping"); setStatus("Medindo ping..."); await measurePing();
-    setStep("down"); setStatus("Testando download..."); await measureDownload();
-    setStep("up"); setStatus("Testando upload..."); await measureUpload();
-    setStep("end"); setStatus("Finalizando..."); await metaP; await sleep(reduced() ? 50 : 500);
-    showResults(); saveResult(); setStatus("Teste concluído"); setButton("TESTAR NOVAMENTE", false);
+
+    const metaP = loadMeta();
+
+    /*
+     * Antes havia:
+     *
+     * updateSpeedometer(1000);
+     * await sleep(...);
+     * updateSpeedometer(0);
+     *
+     * Isso causava o pico artificial.
+     *
+     * Agora o ponteiro permanece em 0.
+     */
+    await prepare();
+
+    setStep("ping");
+    setStatus("Medindo ping...");
+    await measurePing();
+
+    setStep("down");
+    setStatus("Testando download...");
+    await measureDownload();
+
+    setStep("up");
+    setStatus("Testando upload...");
+    await measureUpload();
+
+    setStep("end");
+    setStatus("Finalizando...");
+
+    await metaP;
+    await sleep(
+      reduced() ? 50 : 450
+    );
+
+    showResults();
+    saveResult();
+
+    setStatus("Teste concluído");
+    setButton(
+      "TESTAR NOVAMENTE",
+      false
+    );
+
   } catch (e) {
-    showNotice(e.message || "Não foi possível concluir a medição. Verifique sua conexão e tente novamente.");
-    setStep(""); updateSpeedometer(0); setStatus("Teste interrompido"); setButton("TENTAR NOVAMENTE", false);
-  } finally { S.running = false }
-}
-async function prepare() { updateSpeedometer(1000); await sleep(reduced() ? 100 : 700); updateSpeedometer(0); await sleep(reduced() ? 100 : 600) }
-function fail(step, e) { // mensagens amigáveis; nunca deixa o teste preso
-  const m = e && e.name === "AbortError" ? `Tempo esgotado na etapa de ${step}. Verifique sua conexão e tente novamente.`
-    : e instanceof TypeError ? `Falha na etapa de ${step}: o endpoint está indisponível, foi bloqueado por CORS ou você está sem conexão. Confira SPEED_TEST_CONFIG e a rede.`
-    : "Não foi possível concluir a medição. Verifique sua conexão e tente novamente.";
-  return new Error(m);
-}
-const fetchT = (url, ms) => { const c = new AbortController(), t = setTimeout(() => c.abort(), ms); return fetch(bust(url), { cache: "no-store", signal: c.signal }).finally(() => clearTimeout(t)) };
-async function loadMeta() { if (!CFG.metaUrl) return; try { S.meta = await (await fetchT(CFG.metaUrl, CFG.timeout)).json() } catch { S.meta = null } }
+    showNotice(
+      e.message ||
+      "Não foi possível concluir a medição. Verifique sua conexão e tente novamente."
+    );
 
-/* Ping: mede o tempo de ida e volta com performance.now(); descarta a 1ª amostra (handshake). Jitter = variação média entre amostras. */
-async function measurePing() {
-  const t = [];
-  try {
-    for (let i = 0; i < CFG.pingCount; i++) {
-      const a = performance.now(); const r = await fetchT(CFG.pingUrl, CFG.timeout); await r.arrayBuffer();
-      const d = performance.now() - a; if (i > 0) t.push(d);
-      if (t.length) {
-        S.res.ping = [...t].sort((x, y) => x - y)[Math.floor(t.length / 2)];
-        S.res.jitter = t.length > 1 ? t.slice(1).reduce((s, x, j) => s + Math.abs(x - t[j]), 0) / (t.length - 1) : 0;
-        renderMetrics();
-      }
-      await sleep(80);
-    }
-  } catch (e) { throw fail("ping", e) }
-}
+    setStep("");
+    updateSpeedometer(0);
 
-/* Download: N conexões paralelas leem o corpo da resposta em stream e contam os bytes recebidos. */
-async function dlWorker(st) {
-  while (!st.ac.signal.aborted) {
-    try {
-      const r = await fetch(bust(CFG.downloadUrl), { cache: "no-store", signal: st.ac.signal });
-      if (!r.ok) throw new Error("HTTP " + r.status);
-      if (r.body && r.body.getReader) { const rd = r.body.getReader(); for (;;) { const { done, value } = await rd.read(); if (done) break; st.bytes += value.length } }
-      else st.bytes += (await r.arrayBuffer()).byteLength;
-    } catch (e) { if (!st.ac.signal.aborted) st.fail = e; return }
+    setStatus("Teste interrompido");
+
+    setButton(
+      "TENTAR NOVAMENTE",
+      false
+    );
+
+  } finally {
+    S.running = false;
   }
 }
-/* Upload: XHR (fornece progresso de envio) com um Blob de dados aleatórios, repetido até o fim do tempo. */
+
+async function prepare() {
+  /*
+   * Pequeno tempo de preparação visual.
+   * O ponteiro permanece em 0 durante toda essa fase.
+   */
+  updateSpeedometer(0, true);
+
+  await sleep(
+    reduced() ? 60 : 350
+  );
+}
+
+function fail(step, e) {
+  const m =
+    e && e.name === "AbortError"
+      ? `Tempo esgotado na etapa de ${step}. Verifique sua conexão e tente novamente.`
+      : e instanceof TypeError
+        ? `Falha na etapa de ${step}: o endpoint está indisponível, foi bloqueado por CORS ou você está sem conexão. Confira SPEED_TEST_CONFIG e a rede.`
+        : "Não foi possível concluir a medição. Verifique sua conexão e tente novamente.";
+
+  return new Error(m);
+}
+
+const fetchT = (url, ms) => {
+  const c = new AbortController();
+
+  const t = setTimeout(
+    () => c.abort(),
+    ms
+  );
+
+  return fetch(
+    bust(url),
+    {
+      cache: "no-store",
+      signal: c.signal
+    }
+  ).finally(() =>
+    clearTimeout(t)
+  );
+};
+
+async function loadMeta() {
+  if (!CFG.metaUrl)
+    return;
+
+  try {
+    S.meta =
+      await (
+        await fetchT(
+          CFG.metaUrl,
+          CFG.timeout
+        )
+      ).json();
+
+  } catch {
+    S.meta = null;
+  }
+}
+
+/* ===================== PING ===================== */
+async function measurePing() {
+  const t = [];
+
+  try {
+    for (
+      let i = 0;
+      i < CFG.pingCount;
+      i++
+    ) {
+      const a = performance.now();
+
+      const r = await fetchT(
+        CFG.pingUrl,
+        CFG.timeout
+      );
+
+      await r.arrayBuffer();
+
+      const d =
+        performance.now() - a;
+
+      if (i > 0)
+        t.push(d);
+
+      if (t.length) {
+        S.res.ping =
+          [...t].sort(
+            (x, y) => x - y
+          )[Math.floor(t.length / 2)];
+
+        S.res.jitter =
+          t.length > 1
+            ? t.slice(1).reduce(
+                (s, x, j) =>
+                  s +
+                  Math.abs(
+                    x - t[j]
+                  ),
+                0
+              ) /
+              (t.length - 1)
+            : 0;
+
+        renderMetrics();
+      }
+
+      await sleep(80);
+    }
+
+  } catch (e) {
+    throw fail("ping", e);
+  }
+}
+
+/* ===================== DOWNLOAD ===================== */
+async function dlWorker(st) {
+  while (
+    !st.ac.signal.aborted
+  ) {
+    try {
+      const r = await fetch(
+        bust(CFG.downloadUrl),
+        {
+          cache: "no-store",
+          signal: st.ac.signal
+        }
+      );
+
+      if (!r.ok)
+        throw new Error(
+          "HTTP " + r.status
+        );
+
+      if (
+        r.body &&
+        r.body.getReader
+      ) {
+        const rd =
+          r.body.getReader();
+
+        for (;;) {
+          const {
+            done,
+            value
+          } = await rd.read();
+
+          if (done)
+            break;
+
+          st.bytes +=
+            value.length;
+        }
+
+      } else {
+        st.bytes +=
+          (
+            await r.arrayBuffer()
+          ).byteLength;
+      }
+
+    } catch (e) {
+      if (!st.ac.signal.aborted)
+        st.fail = e;
+
+      return;
+    }
+  }
+}
+
+/* ===================== UPLOAD ===================== */
 let PAYLOAD;
+
 async function ulWorker(st) {
-  if (!PAYLOAD) { const c = crypto.getRandomValues(new Uint8Array(65536)), a = new Uint8Array(65536 * 64); for (let i = 0; i < 64; i++) a.set(c, i * 65536); PAYLOAD = new Blob([a]) }
-  while (!st.ac.signal.aborted && !st.fail) {
+  if (!PAYLOAD) {
+    const c =
+      crypto.getRandomValues(
+        new Uint8Array(65536)
+      );
+
+    const a =
+      new Uint8Array(
+        65536 * 64
+      );
+
+    for (
+      let i = 0;
+      i < 64;
+      i++
+    ) {
+      a.set(
+        c,
+        i * 65536
+      );
+    }
+
+    PAYLOAD =
+      new Blob([a]);
+  }
+
+  while (
+    !st.ac.signal.aborted &&
+    !st.fail
+  ) {
     await new Promise(res => {
-      const x = new XMLHttpRequest(); let last = 0; st.xhrs.push(x);
-      x.open("POST", bust(CFG.uploadUrl)); x.timeout = CFG.timeout * 3;
-      x.upload.onprogress = e => { st.bytes += e.loaded - last; last = e.loaded };
-      x.onerror = () => { if (!st.ac.signal.aborted) st.fail = new TypeError("upload"); res() };
-      x.onload = () => { if (x.status >= 400) st.fail = new Error("HTTP " + x.status); res() };
-      x.onabort = x.ontimeout = () => res();
+      const x =
+        new XMLHttpRequest();
+
+      let last = 0;
+
+      st.xhrs.push(x);
+
+      x.open(
+        "POST",
+        bust(CFG.uploadUrl)
+      );
+
+      x.timeout =
+        CFG.timeout * 3;
+
+      x.upload.onprogress = e => {
+        st.bytes +=
+          e.loaded - last;
+
+        last = e.loaded;
+      };
+
+      x.onerror = () => {
+        if (!st.ac.signal.aborted) {
+          st.fail =
+            new TypeError(
+              "upload"
+            );
+        }
+
+        res();
+      };
+
+      x.onload = () => {
+        if (x.status >= 400) {
+          st.fail =
+            new Error(
+              "HTTP " + x.status
+            );
+        }
+
+        res();
+      };
+
+      x.onabort =
+        x.ontimeout = () =>
+          res();
+
       x.send(PAYLOAD);
     });
   }
 }
-/* Amostragem comum: a cada 150 ms calcula a velocidade instantânea (suavizada) e atualiza velocímetro, gráfico e cartões. */
-async function measureThroughput(key, worker) {
-  const st = { bytes: 0, fail: null, ac: new AbortController(), xhrs: [] };
-  S.samples = []; S.max = 0; drawChart();
-  const t0 = performance.now(); let lt = t0, lb = 0, cur = 0, wb = 0, wt = t0, warm = false, sum = 0, n = 0;
-  for (let i = 0; i < CFG.streams; i++) worker(st);
+
+/* ===================== THROUGHPUT ===================== */
+async function measureThroughput(
+  key,
+  worker
+) {
+  const st = {
+    bytes: 0,
+    fail: null,
+    ac: new AbortController(),
+    xhrs: []
+  };
+
+  S.samples = [];
+  S.max = 0;
+
+  /* reinicia suavização de cada etapa */
+  S.smoothWindow = [];
+  S.smoothValue = 0;
+
+  drawChart();
+
+  const t0 = performance.now();
+
+  let lt = t0;
+  let lb = 0;
+
+  let cur = 0;
+
+  let wb = 0;
+  let wt = t0;
+
+  let warm = false;
+
+  let sum = 0;
+  let n = 0;
+
+  for (
+    let i = 0;
+    i < CFG.streams;
+    i++
+  ) {
+    worker(st);
+  }
+
   await new Promise(res => {
-    const id = setInterval(() => {
-      const now = performance.now(), b = st.bytes;
-      const inst = (b - lb) * 8 / (1e3 * (now - lt)); lt = now; lb = b; // Mbps
-      cur = cur ? cur * .6 + inst * .4 : inst;
-      if (!warm && now - t0 > 1000) { warm = true; wb = b; wt = now } // ignora o 1º segundo (TCP slow start)
-      S.max = Math.max(S.max, cur); if (warm) { sum += cur; n++ }
-      S.res[key] = cur; renderMetrics(); updateSpeedometer(cur); updateChart(cur); showPhaseStats(cur, n ? sum / n : cur);
-      if (now - t0 >= CFG.duration || (st.fail && !b)) { clearInterval(id); res() }
-    }, 150);
+    const id =
+      setInterval(() => {
+        const now =
+          performance.now();
+
+        const b =
+          st.bytes;
+
+        const elapsed =
+          now - lt;
+
+        /*
+         * Velocidade instantânea real.
+         */
+        const inst =
+          elapsed > 0
+            ? (b - lb) *
+              8 /
+              (1e3 * elapsed)
+            : 0;
+
+        lt = now;
+        lb = b;
+
+        /*
+         * Primeiro remove picos isolados,
+         * depois suaviza.
+         */
+        const stable =
+          stabilizeThroughput(
+            inst
+          );
+
+        /*
+         * Cur representa o valor visual
+         * estável utilizado no medidor.
+         *
+         * Isso evita que um pacote isolado,
+         * mudança de buffer ou rajada de dados
+         * cause um pico enorme na interface.
+         */
+        cur = stable;
+
+        /*
+         * Ignora o primeiro segundo
+         * para as estatísticas de fase.
+         */
+        if (
+          !warm &&
+          now - t0 > 1000
+        ) {
+          warm = true;
+          wb = b;
+          wt = now;
+        }
+
+        S.max = Math.max(
+          S.max,
+          cur
+        );
+
+        if (warm) {
+          sum += cur;
+          n++;
+        }
+
+        /*
+         * A interface recebe somente
+         * o valor estabilizado.
+         */
+        S.res[key] = cur;
+
+        renderMetrics();
+
+        updateSpeedometer(cur);
+
+        updateChart(cur);
+
+        showPhaseStats(
+          cur,
+          n ? sum / n : cur
+        );
+
+        if (
+          now - t0 >=
+            CFG.duration ||
+          (st.fail && !b)
+        ) {
+          clearInterval(id);
+          res();
+        }
+
+      }, SAMPLE_MS);
   });
-  st.ac.abort(); st.xhrs.forEach(x => x.abort());
-  if (!st.bytes) throw st.fail || new TypeError("sem dados");
-  const now = performance.now();
-  return warm ? (st.bytes - wb) * 8 / (1e3 * (now - wt)) : st.bytes * 8 / (1e3 * (now - t0));
+
+  st.ac.abort();
+
+  st.xhrs.forEach(
+    x => x.abort()
+  );
+
+  if (!st.bytes) {
+    throw (
+      st.fail ||
+      new TypeError("sem dados")
+    );
+  }
+
+  /*
+   * Resultado final continua sendo
+   * calculado diretamente pelos bytes reais.
+   * A suavização serve apenas para a interface.
+   */
+  const now =
+    performance.now();
+
+  return warm
+    ? (st.bytes - wb) *
+      8 /
+      (1e3 * (now - wt))
+    : st.bytes *
+      8 /
+      (1e3 * (now - t0));
 }
+
 async function measureDownload() {
-  $("#chartTitle").textContent = "Download em tempo real (" + S.unit + ")";
-  try { S.res.down = await measureThroughput("down", dlWorker) } catch (e) { throw fail("download", e) }
+  $("#chartTitle").textContent =
+    "Download em tempo real (" +
+    S.unit +
+    ")";
+
+  try {
+    S.res.down =
+      await measureThroughput(
+        "down",
+        dlWorker
+      );
+
+  } catch (e) {
+    throw fail(
+      "download",
+      e
+    );
+  }
+
   renderMetrics();
 }
+
 async function measureUpload() {
-  $("#chartTitle").textContent = "Upload em tempo real (" + S.unit + ")";
-  try { S.res.up = await measureThroughput("up", ulWorker) } catch (e) { throw fail("upload", e) }
+  $("#chartTitle").textContent =
+    "Upload em tempo real (" +
+    S.unit +
+    ")";
+
+  try {
+    S.res.up =
+      await measureThroughput(
+        "up",
+        ulWorker
+      );
+
+  } catch (e) {
+    throw fail(
+      "upload",
+      e
+    );
+  }
+
   renderMetrics();
 }
 
 /* ===================== RESULTADOS ===================== */
-function countTo(sel, to, dec) { // animação de contagem 0 → valor final
-  const el = $(sel); if (reduced()) { el.textContent = to.toFixed(dec); return }
-  const t0 = performance.now(), D = 1100;
-  (function f(n) { const p = Math.min(1, (n - t0) / D); el.textContent = (to * (1 - Math.pow(1 - p, 3))).toFixed(dec); if (p < 1) requestAnimationFrame(f) })(t0);
-}
-function showResults() {
-  const r = S.res; updateSpeedometer(r.down);
-  countTo("#mDown", conv(r.down), 2); countTo("#mUp", conv(r.up), 2); countTo("#mPing", r.ping, 0); countTo("#mJit", r.jitter, 1);
-  $$(".tile").forEach(t => { t.classList.remove("glow"); void t.offsetWidth; t.classList.add("glow") });
-  document.body.classList.add("done-glow");
-  // Classificação aproximada (apenas uma estimativa)
-  const l = r.down >= 100 && r.ping < 30 ? "excelente" : r.down >= 25 && r.ping < 80 ? "boa" : r.down >= 5 && r.ping < 150 ? "regular" : "baixa";
-  const q = $("#quality"); q.dataset.l = l; q.textContent = l.toUpperCase();
-  $("#qWrap").hidden = false; renderInfo(); $("#infoCard").hidden = false;
-}
-function renderInfo() {
-  const c = navigator.connection || {}, m = S.meta || {}, r = S.res;
-  const colo = m.colo && typeof m.colo === "object" ? (m.colo.city || m.colo.iata) : m.colo;
-  let host = ""; try { host = new URL(CFG.downloadUrl).hostname } catch {}
-  const rows = [["IP público", m.clientIp], ["Servidor", [m.city, colo].filter(Boolean).join(" · ") || host], ["Tipo de conexão", c.type],
-    ["Tecnologia estimada", c.effectiveType && c.effectiveType.toUpperCase()], ["RTT (navegador)", c.rtt != null && c.rtt + " ms"], ["Downlink (navegador)", c.downlink != null && c.downlink + " Mbps"],
-    ["Economia de dados", c.saveData != null && (c.saveData ? "Ativada" : "Desativada")], ["Latência", r.ping.toFixed(0) + " ms"], ["Jitter", r.jitter.toFixed(1) + " ms"],
-    ["Download", fmt(r.down) + " " + S.unit], ["Upload", fmt(r.up) + " " + S.unit]];
-  $("#info").innerHTML = rows.map(([k, v]) => `<div><dt>${k}</dt><dd>${v ? clean(v) : "Não disponível"}</dd></div>`).join("");
+function countTo(
+  sel,
+  to,
+  dec
+) {
+  const el = $(sel);
+
+  if (reduced()) {
+    el.textContent =
+      to.toFixed(dec);
+
+    return;
+  }
+
+  const t0 =
+    performance.now();
+
+  const D = 1100;
+
+  (function f(n) {
+    const p =
+      Math.min(
+        1,
+        (n - t0) / D
+      );
+
+    el.textContent =
+      (
+        to *
+        (1 -
+          Math.pow(
+            1 - p,
+            3
+          ))
+      ).toFixed(dec);
+
+    if (p < 1)
+      requestAnimationFrame(f);
+
+  })(t0);
 }
 
-/* ===================== HISTÓRICO (localStorage, sem IP) ===================== */
-const HK = "netspeed.history";
-function saveResult() { const h = store.get(HK, []); h.unshift({ t: Date.now(), d: S.res.down, u: S.res.up, p: S.res.ping }); store.set(HK, h.slice(0, 10)); loadHistory() }
-function loadHistory() {
-  const h = store.get(HK, []);
-  $("#hist").innerHTML = Array.isArray(h) && h.length ? h.map(x => { const d = new Date(x.t);
-    return `<li><time datetime="${d.toISOString()}">${d.toLocaleDateString("pt-BR")} — ${d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}</time><span>↓ ${conv(x.d).toFixed(0)} ${S.unit}</span><span>↑ ${conv(x.u).toFixed(0)} ${S.unit}</span><span>◉ ${Number(x.p).toFixed(0)} ms</span></li>` }).join("")
-    : '<li class="empty">Nenhum teste salvo ainda. Faça o primeiro teste!</li>';
+function showResults() {
+  const r = S.res;
+
+  /*
+   * O valor final também chega suavemente
+   * ao resultado, sem "teleporte".
+   */
+  updateSpeedometer(r.down);
+
+  countTo(
+    "#mDown",
+    conv(r.down),
+    2
+  );
+
+  countTo(
+    "#mUp",
+    conv(r.up),
+    2
+  );
+
+  countTo(
+    "#mPing",
+    r.ping,
+    0
+  );
+
+  countTo(
+    "#mJit",
+    r.jitter,
+    1
+  );
+
+  $$(".tile").forEach(t => {
+    t.classList.remove("glow");
+    void t.offsetWidth;
+    t.classList.add("glow");
+  });
+
+  document.body.classList.add(
+    "done-glow"
+  );
+
+  const l =
+    r.down >= 100 &&
+    r.ping < 30
+      ? "excelente"
+      : r.down >= 25 &&
+        r.ping < 80
+        ? "boa"
+        : r.down >= 5 &&
+          r.ping < 150
+          ? "regular"
+          : "baixa";
+
+  const q = $("#quality");
+
+  q.dataset.l = l;
+  q.textContent =
+    l.toUpperCase();
+
+  $("#qWrap").hidden = false;
+
+  renderInfo();
+
+  $("#infoCard").hidden = false;
 }
-function clearHistory() { store.set(HK, []); loadHistory() }
+
+function renderInfo() {
+  const c =
+    navigator.connection || {};
+
+  const m =
+    S.meta || {};
+
+  const r =
+    S.res;
+
+  const colo =
+    m.colo &&
+    typeof m.colo === "object"
+      ? (
+          m.colo.city ||
+          m.colo.iata
+        )
+      : m.colo;
+
+  let host = "";
+
+  try {
+    host =
+      new URL(
+        CFG.downloadUrl
+      ).hostname;
+  } catch {}
+
+  const rows = [
+    ["IP público", m.clientIp],
+    [
+      "Servidor",
+      [m.city, colo]
+        .filter(Boolean)
+        .join(" · ") ||
+        host
+    ],
+    [
+      "Tipo de conexão",
+      c.type
+    ],
+    [
+      "Tecnologia estimada",
+      c.effectiveType &&
+        c.effectiveType.toUpperCase()
+    ],
+    [
+      "RTT (navegador)",
+      c.rtt != null &&
+        c.rtt + " ms"
+    ],
+    [
+      "Downlink (navegador)",
+      c.downlink != null &&
+        c.downlink + " Mbps"
+    ],
+    [
+      "Economia de dados",
+      c.saveData != null &&
+        (
+          c.saveData
+            ? "Ativada"
+            : "Desativada"
+        )
+    ],
+    [
+      "Latência",
+      r.ping.toFixed(0) +
+        " ms"
+    ],
+    [
+      "Jitter",
+      r.jitter.toFixed(1) +
+        " ms"
+    ],
+    [
+      "Download",
+      fmt(r.down) +
+        " " +
+        S.unit
+    ],
+    [
+      "Upload",
+      fmt(r.up) +
+        " " +
+        S.unit
+    ]
+  ];
+
+  $("#info").innerHTML =
+    rows
+      .map(
+        ([k, v]) =>
+          `<div>
+            <dt>${k}</dt>
+            <dd>${v ? clean(v) : "Não disponível"}</dd>
+          </div>`
+      )
+      .join("");
+}
+
+/* ===================== HISTÓRICO ===================== */
+const HK =
+  "netspeed.history";
+
+function saveResult() {
+  const h =
+    store.get(HK, []);
+
+  h.unshift({
+    t: Date.now(),
+    d: S.res.down,
+    u: S.res.up,
+    p: S.res.ping
+  });
+
+  store.set(
+    HK,
+    h.slice(0, 10)
+  );
+
+  loadHistory();
+}
+
+function loadHistory() {
+  const h =
+    store.get(HK, []);
+
+  $("#hist").innerHTML =
+    Array.isArray(h) &&
+    h.length
+      ? h
+          .map(x => {
+            const d =
+              new Date(x.t);
+
+            return `
+              <li>
+                <time datetime="${d.toISOString()}">
+                  ${d.toLocaleDateString("pt-BR")}
+                  —
+                  ${d.toLocaleTimeString(
+                    "pt-BR",
+                    {
+                      hour: "2-digit",
+                      minute: "2-digit"
+                    }
+                  )}
+                </time>
+
+                <span>
+                  ↓ ${conv(x.d).toFixed(0)}
+                  ${S.unit}
+                </span>
+
+                <span>
+                  ↑ ${conv(x.u).toFixed(0)}
+                  ${S.unit}
+                </span>
+
+                <span>
+                  ◉ ${Number(x.p).toFixed(0)}
+                  ms
+                </span>
+              </li>
+            `;
+          })
+          .join("")
+
+      : '<li class="empty">Nenhum teste salvo ainda. Faça o primeiro teste!</li>';
+}
+
+function clearHistory() {
+  store.set(HK, []);
+  loadHistory();
+}
+
+initializeApp();
+</script>
+</body>
+</html>★ As mudanças principais são: sem 0 → 1000 → 0 no início, amostragem visual a cada 200 ms, filtro de mediana de 5 amostras, suavização exponencial e um ponteiro com movimento mais lento. O cálculo final de download/upload continua usando os bytes realmente transferidos, então a estabilização não transforma o resultado em um valor “inventado”.
+
+Também deixei o gráfico acompanhando o valor estabilizado, evitando aquelas serras com picos absurdos. 🚀📶
+
+Fiz a alteração para o ponteiro começar em 0, sem aquele salto artificial até 1000 Mbps, e deixei a medição visual bem mais estável. Também apliquei uma janela de mediana + suavização exponencial nas amostras exibidas, enquanto o valor final continua sendo calculado pela quantidade real de dados transferidos.
+
+writing{variant="document" title="NetSpeed — medidor suavizado e sem pico inicial" id="58321"}
+
+<!DOCTYPE html><html lang="pt-BR" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>NetSpeed</title>
+<style>
+/* ===== Paleta (edite as variáveis para trocar as cores) ===== */
+*{box-sizing:border-box;margin:0}
+:root,[data-theme=light]{--bg:#eef2fb;--surface:rgba(255,255,255,.72);--text:#0e1630;--muted:#586380;--primary:#3557ff;--accent:#00b3d1;--border:rgba(14,22,48,.1);--shadow:0 12px 40px rgba(40,60,140,.14);--track:rgba(14,22,48,.08)}
+[data-theme=dark]{--bg:#070b18;--surface:rgba(20,28,54,.62);--text:#e9eeff;--muted:#93a0c4;--primary:#7290ff;--accent:#22e0d0;--border:rgba(160,180,255,.15);--shadow:0 12px 40px rgba(0,0,0,.5);--track:rgba(160,180,255,.12);color-scheme:dark}
+[hidden]{display:none!important}
+body{font:16px/1.5 ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color:var(--text);min-height:100vh;overflow-x:hidden;
+background:radial-gradient(50rem 32rem at 8% -8%,color-mix(in srgb,var(--primary) 24%,transparent),transparent),radial-gradient(44rem 30rem at 100% 10%,color-mix(in srgb,var(--accent) 18%,transparent),transparent),var(--bg);transition:background-color .4s,color .4s}
+:focus-visible{outline:3px solid var(--primary);outline-offset:3px}
+button,select{font:inherit;color:inherit}
+.wrap{width:min(1080px,100% - 32px);margin:0 auto}
+header{position:sticky;top:0;z-index:5;backdrop-filter:blur(16px);background:color-mix(in srgb,var(--bg) 70%,transparent);border-bottom:1px solid var(--border);transition:background-color .4s}
+.bar{display:flex;align-items:center;justify-content:space-between;gap:12px;height:64px}
+.logo{display:flex;align-items:center;gap:10px;font-weight:750;font-size:1.25rem;letter-spacing:-.02em;color:var(--text);text-decoration:none}
+.logo svg{width:32px;height:32px;padding:6px;border-radius:10px;background:linear-gradient(135deg,var(--accent),var(--primary));fill:#fff}
+.tools{display:flex;align-items:center;gap:8px}
+.seg{display:flex;padding:3px;border:1px solid var(--border);border-radius:999px;background:var(--track)}
+.seg button{border:0;background:none;color:var(--muted);padding:6px 11px;border-radius:999px;cursor:pointer;font-size:.85rem;transition:background .25s,color .25s}
+.seg [aria-pressed=true]{background:var(--bg);color:var(--text);box-shadow:0 1px 6px rgba(0,0,0,.15)}
+.icon,.ghost{border:1px solid var(--border);background:var(--surface);border-radius:999px;cursor:pointer;transition:transform .2s,border-color .2s}
+.icon{width:38px;height:38px}.ghost{padding:7px 14px;font-size:.85rem}
+.icon:hover,.ghost:hover{transform:translateY(-1px);border-color:var(--primary)}
+.intro{text-align:center;padding:36px 0 22px}
+h1{font-size:clamp(1.6rem,4.5vw,2.6rem);letter-spacing:-.03em;line-height:1.15}
+.intro p{color:var(--muted);margin-top:8px}
+h2{font-size:1.05rem;letter-spacing:-.01em}
+.notice{margin:0 0 16px;padding:14px 18px;border-radius:16px;background:color-mix(in srgb,#ef4444 14%,var(--surface));border:1px solid #ef4444;animation:rise .4s}
+.grid{display:grid;gap:20px;grid-template-columns:1fr;margin-bottom:20px}
+.grid>*{min-width:0}
+@media(min-width:900px){.grid.a{grid-template-columns:1.05fr 1fr}}
+.grid.b{grid-template-columns:repeat(auto-fit,minmax(min(100%,340px),1fr))}
+.side{display:grid;gap:20px;align-content:start}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:24px;box-shadow:var(--shadow);backdrop-filter:blur(18px);padding:clamp(18px,3vw,28px);animation:rise .6s both;transition:background-color .4s,border-color .4s}
+.grid>:nth-child(2){animation-delay:.1s}
+.ch{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px}
+/* ===== Velocímetro ===== */
+.gauge{position:relative;width:min(100%,420px);margin:0 auto}
+.gauge svg{width:100%;display:block;overflow:visible}
+.gauge text{font-size:9px;fill:var(--muted);font-variant-numeric:tabular-nums}
+#track{fill:none;stroke:var(--track);stroke-width:12;stroke-linecap:round}
+#arc{fill:none;stroke:url(#g);stroke-width:12;stroke-linecap:round;filter:drop-shadow(0 0 6px color-mix(in srgb,var(--primary) 55%,transparent))}
+.dash{fill:none;stroke:var(--border);stroke-width:1;stroke-dasharray:2 5}
+#needle line{stroke:var(--text);stroke-width:3;stroke-linecap:round}
+#needle circle{fill:var(--primary);stroke:var(--bg);stroke-width:3}
+.readout{position:absolute;left:0;right:0;top:57%;text-align:center}
+#speedVal{display:block;font-size:clamp(2.2rem,10vw,3.5rem);font-weight:750;letter-spacing:-.03em;line-height:1;font-variant-numeric:tabular-nums}
+#unit{color:var(--muted);font-size:.95rem}
+#status{font-size:.9rem;font-weight:600;margin-top:4px}
+.testing .gauge{animation:pulse 1.8s ease-in-out infinite}
+.done-glow #arc{animation:glow 1.4s}
+.cta{display:block;margin:14px auto 22px;width:min(100%,320px);padding:18px 24px;border:0;border-radius:999px;cursor:pointer;color:#fff;font-weight:750;font-size:1.1rem;letter-spacing:.06em;background:linear-gradient(135deg,var(--accent),var(--primary));box-shadow:0 10px 30px color-mix(in srgb,var(--primary) 45%,transparent);transition:transform .25s,box-shadow .25s,opacity .25s}
+.cta:hover:not(:disabled){transform:translateY(-3px) scale(1.02);box-shadow:0 16px 40px color-mix(in srgb,var(--primary) 55%,transparent)}
+.cta:disabled{opacity:.6;cursor:progress}
+.steps{list-style:none;padding:0;display:flex;gap:8px;justify-content:center}
+.steps li{flex:1;display:flex;align-items:center;justify-content:center;gap:8px;padding:10px 6px;border-radius:14px;border:1px solid var(--border);color:var(--muted);font-size:.9rem;transition:all .3s}
+.dot::before{content:"○"}
+.steps .active{color:var(--text);border-color:var(--primary);background:color-mix(in srgb,var(--primary) 10%,transparent)}
+.active .dot::before{content:"●";color:var(--primary);animation:blink 1s infinite}
+.steps .done{color:var(--text)}
+.done .dot::before{content:"✓";color:var(--accent);font-weight:800;display:inline-block;animation:pop .45s}
+canvas{width:100%;height:190px;display:block}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px;text-align:center}
+.stats dt{color:var(--muted);font-size:.8rem}.stats dd{font-weight:700;font-variant-numeric:tabular-nums}
+.tiles{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px}
+.tile{padding:14px;border-radius:18px;border:1px solid var(--border);background:var(--track)}
+.tile .k{display:block;color:var(--muted);font-size:.85rem}
+.tile b{font-size:clamp(1.3rem,4.5vw,1.85rem);letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.tile small{color:var(--muted);font-size:.8rem;font-weight:500}
+.tile.glow{animation:glow 1.4s}
+.q{display:inline-block;margin-top:16px;padding:6px 16px;border-radius:999px;font-weight:750;letter-spacing:.05em;color:#fff;background:var(--c,#888);animation:pop .5s}
+#qHint{display:block;margin-top:6px;color:var(--muted);font-size:.82rem}
+.q[data-l=excelente]{--c:#16a870}.q[data-l=boa]{--c:#2b8fe0}.q[data-l=regular]{--c:#d98a0b}.q[data-l=baixa]{--c:#dc3c3c}
+.info{display:grid;gap:2px;margin-top:8px}
+.info div{display:flex;justify-content:space-between;gap:12px;padding:8px 0;border-bottom:1px solid var(--border);font-size:.92rem}
+.info dt{color:var(--muted)}.info dd{font-weight:600;text-align:right;overflow-wrap:anywhere}
+#hist{list-style:none;padding:0}
+#hist li{display:flex;flex-wrap:wrap;gap:4px 14px;padding:10px 0;border-bottom:1px solid var(--border);font-size:.9rem;font-variant-numeric:tabular-nums}
+#hist time{flex-basis:100%;color:var(--muted);font-size:.8rem}
+#hist .empty{color:var(--muted)}
+.foot{color:var(--muted);font-size:.8rem;text-align:center;padding:8px 0 40px}/* ===== Configurações ===== */dialog{margin:auto;width:min(420px,calc(100% - 32px));border:1px solid var(--border);border-radius:24px;padding:0;background:var(--bg);color:var(--text);box-shadow:var(--shadow)}dialog[open]{animation:pop .3s}dialog::backdrop{background:rgba(5,10,25,.55);backdrop-filter:blur(4px)}.dbody{padding:22px}.row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 0;border-bottom:1px solid var(--border)}dialog .seg .lb{display:inline!important}select{padding:8px 10px;border-radius:10px;border:1px solid var(--border);background:var(--surface)}input[type=checkbox]{width:22px;height:22px;accent-color:var(--primary)}@media(max-width:560px){.seg .lb{display:none}.logo{font-size:1.1rem}.card{border-radius:20px}.steps li{font-size:.8rem;gap:4px}}
+
+/* ===== Animações ===== /@keyframes rise{from{opacity:0;transform:translateY(14px)}}@keyframes pop{from{opacity:0;transform:scale(.7)}}@keyframes blink{50%{opacity:.35}}@keyframes pulse{50%{filter:drop-shadow(0 0 18px color-mix(in srgb,var(--primary) 45%,transparent))}}@keyframes glow{0%,100%{box-shadow:none}40%{box-shadow:0 0 0 3px var(--accent),0 0 28px var(--accent)}}@media(prefers-reduced-motion:reduce){,*::before{animation:none!important;transition:none!important}}[data-motion=off] *,[data-motion=off] *::before{animation:none!important;transition:none!important}</style>
+
+</head><body>
+<header>
+  <div class="wrap bar">
+    <a class="logo" href="./" aria-label="Início">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M13 2 4 14h6l-1 8 9-12h-6z"/>
+      </svg>
+      <span id="appName">NetSpeed</span>
+    </a><div class="tools">
+  <div class="seg" data-themeseg role="group" aria-label="Tema"></div>
+  <button class="icon" id="openSettings" aria-label="Abrir configurações">⚙</button>
+</div>
+
+  </div>
+</header><main class="wrap" id="app">
+  <div class="intro">
+    <h1>Teste a velocidade da sua conexão</h1>
+    <p>Latência, download e upload medidos de verdade, direto no navegador.</p>
+  </div>  <p id="notice" class="notice" role="alert" hidden></p>  <div class="grid a">
+    <section class="card" aria-label="Teste de velocidade">
+      <div class="gauge">
+        <svg viewBox="0 0 300 300" role="img" aria-label="Velocímetro circular. Os valores em texto estão sempre disponíveis nos resultados.">
+          <defs>
+            <linearGradient id="g" x1="0" y1="1" x2="1" y2="0">
+              <stop offset="0" style="stop-color:var(--accent)"/>
+              <stop offset="1" style="stop-color:var(--primary)"/>
+            </linearGradient>
+          </defs><circle class="dash" cx="150" cy="150" r="146"/>
+      <circle id="track" cx="150" cy="150" r="118" transform="rotate(135 150 150)"/>
+      <circle id="arc" cx="150" cy="150" r="118" transform="rotate(135 150 150)"/>
+      <g id="ticks"></g>
+
+      <g id="needle">
+        <line x1="150" y1="150" x2="150" y2="62"/>
+        <circle cx="150" cy="150" r="8"/>
+      </g>
+    </svg>
+
+    <div class="readout">
+      <output id="speedVal">0.00</output>
+      <span id="unit">Mbps</span>
+      <p id="status" role="status" aria-live="polite">Pronto para testar</p>
+    </div>
+  </div>
+
+  <button class="cta" id="startBtn">INICIAR TESTE</button>
+
+  <ol class="steps" aria-label="Etapas do teste">
+    <li data-step="ping"><i class="dot"></i>Ping</li>
+    <li data-step="down"><i class="dot"></i>Download</li>
+    <li data-step="up"><i class="dot"></i>Upload</li>
+  </ol>
+</section>
+
+<div class="side">
+  <section class="card">
+    <div class="ch">
+      <h2 id="chartTitle">Velocidade em tempo real</h2>
+    </div>
+
+    <canvas id="chart" role="img" aria-label="Gráfico da velocidade ao longo do tempo"></canvas>
+
+    <dl class="stats">
+      <div><dt>Atual</dt><dd id="stCur">--</dd></div>
+      <div><dt>Média</dt><dd id="stAvg">--</dd></div>
+      <div><dt>Máxima</dt><dd id="stMax">--</dd></div>
+    </dl>
+  </section>
+
+  <section class="card">
+    <h2>Resultado do teste</h2>
+
+    <div class="tiles">
+      <div class="tile">
+        <span class="k">↓ Download</span>
+        <b><output id="mDown">--</output> <small class="u">Mbps</small></b>
+      </div>
+
+      <div class="tile">
+        <span class="k">↑ Upload</span>
+        <b><output id="mUp">--</output> <small class="u">Mbps</small></b>
+      </div>
+
+      <div class="tile">
+        <span class="k">◉ Ping</span>
+        <b><output id="mPing">--</output> <small>ms</small></b>
+      </div>
+
+      <div class="tile">
+        <span class="k">≈ Jitter</span>
+        <b><output id="mJit">--</output> <small>ms</small></b>
+      </div>
+    </div>
+
+    <div id="qWrap" hidden>
+      <span class="q" id="quality"></span>
+      <small id="qHint">Estimativa baseada nos valores medidos; não é uma classificação absoluta.</small>
+    </div>
+  </section>
+</div>
+
+  </div>  <div class="grid b">
+    <section class="card" id="infoCard" hidden>
+      <h2>Informações da conexão</h2>
+      <dl class="info" id="info"></dl>
+    </section><section class="card">
+  <div class="ch">
+    <h2>Histórico</h2>
+    <button class="ghost" data-clear>Limpar histórico</button>
+  </div>
+
+  <ul id="hist"></ul>
+</section>
+
+  </div>  <p class="foot">
+    Medição real com fetch() e XHR nos endpoints de SPEED_TEST_CONFIG
+    (padrão: Cloudflare). Nada é simulado. O histórico fica só neste navegador
+    e o IP nunca é salvo. Resultados variam com Wi-Fi, servidor e uso da rede.
+  </p>
+</main><dialog id="dlg" aria-labelledby="dlgT">
+  <div class="dbody">
+    <div class="ch">
+      <h2 id="dlgT">Configurações</h2>
+      <button class="icon" id="closeDlg" aria-label="Fechar">✕</button>
+    </div><div class="row">
+  <span>Tema</span>
+  <div class="seg" data-themeseg role="group" aria-label="Tema"></div>
+</div>
+
+<label class="row">
+  <span>Unidade de velocidade</span>
+  <select id="unitSel">
+    <option>Mbps</option>
+    <option>MB/s</option>
+    <option>Kbps</option>
+  </select>
+</label>
+
+<label class="row">
+  <span>Animações</span>
+  <input type="checkbox" id="animChk">
+</label>
+
+<div class="row" style="border:0">
+  <span>Histórico local</span>
+  <button class="ghost" data-clear>Limpar histórico</button>
+</div>
+
+  </div>
+</dialog><script>
+"use strict";
+
+/* ===================== CONFIGURAÇÃO ===================== */
+const APP_NAME = "NetSpeed";
+
+const SPEED_TEST_CONFIG = {
+  downloadUrl: "https://speed.cloudflare.com/__down?bytes=50000000",
+  uploadUrl: "https://speed.cloudflare.com/__up",
+  pingUrl: "https://speed.cloudflare.com/__down?bytes=0",
+  metaUrl: "https://speed.cloudflare.com/meta",
+
+  pingCount: 10,
+  streams: 4,
+  duration: 8000,
+  timeout: 5000
+};
+
+const CFG = SPEED_TEST_CONFIG;
+
+/* ===================== ESTADO ===================== */
+const $ = s => document.querySelector(s);
+const $$ = s => [...document.querySelectorAll(s)];
+
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+const S = {
+  theme: "auto",
+  unit: "Mbps",
+  anim: true,
+
+  cur: 0,
+  target: 0,
+
+  running: false,
+
+  samples: [],
+  max: 0,
+
+  res: {},
+  meta: null,
+
+  /* estado da suavização visual */
+  smoothWindow: [],
+  smoothValue: 0
+};
+
+const mq = window.matchMedia("(prefers-color-scheme: dark)");
+
+const store = {
+  get(k, d) {
+    try {
+      return JSON.parse(localStorage.getItem(k)) ?? d;
+    } catch {
+      return d;
+    }
+  },
+
+  set(k, v) {
+    try {
+      localStorage.setItem(k, JSON.stringify(v));
+    } catch {}
+  }
+};
+
+const reduced = () =>
+  !S.anim || matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+const conv = v =>
+  S.unit === "MB/s" ? v / 8 :
+  S.unit === "Kbps" ? v * 1000 :
+  v;
+
+const fmt = v => conv(v).toFixed(2);
+
+const bust = u =>
+  u + (u.includes("?") ? "&" : "?") + "r=" +
+  Math.random().toString(36).slice(2);
+
+const clean = v => String(v).replace(/[<>&"']/g, "");
+
+const persist = () =>
+  store.set("netspeed.settings", {
+    theme: S.theme,
+    unit: S.unit,
+    anim: S.anim
+  });
+
+/* ===================== INICIALIZAÇÃO ===================== */
+function initializeApp() {
+  document.title = APP_NAME + " — Teste de velocidade";
+  $("#appName").textContent = APP_NAME;
+
+  const saved = store.get("netspeed.settings", {});
+
+  if (["light", "dark", "auto"].includes(saved.theme))
+    S.theme = saved.theme;
+
+  if (["Mbps", "MB/s", "Kbps"].includes(saved.unit))
+    S.unit = saved.unit;
+
+  if (typeof saved.anim === "boolean")
+    S.anim = saved.anim;
+
+  $("#unitSel").value = S.unit;
+  $("#animChk").checked = S.anim;
+
+  applyMotion();
+  initializeTheme();
+  initializeSpeedometer();
+  initializeChart();
+  refreshUnits();
+  loadHistory();
+
+  const dlg = $("#dlg");
+
+  $("#startBtn").onclick = startSpeedTest;
+
+  $("#openSettings").onclick = () => dlg.showModal();
+
+  $("#closeDlg").onclick = () => dlg.close();
+
+  dlg.onclick = e => {
+    if (e.target === dlg) dlg.close();
+  };
+
+  $("#unitSel").onchange = e => {
+    S.unit = e.target.value;
+    persist();
+    refreshUnits();
+  };
+
+  $("#animChk").onchange = e => {
+    S.anim = e.target.checked;
+    persist();
+    applyMotion();
+  };
+
+  document.addEventListener("click", e => {
+    const b = e.target.closest("[data-tc]");
+
+    if (b) {
+      S.theme = b.dataset.tc;
+      persist();
+      applyTheme();
+    }
+
+    if (
+      e.target.closest("[data-clear]") &&
+      confirm("Apagar todo o histórico de testes? Esta ação não pode ser desfeita.")
+    ) {
+      clearHistory();
+    }
+  });
+}
+
+function applyMotion() {
+  document.documentElement.dataset.motion = S.anim ? "on" : "off";
+}
+
+function refreshUnits() {
+  $("#unit").textContent = S.unit;
+
+  renderMetrics();
+  loadHistory();
+
+  /* apenas sincroniza o valor atual, sem criar movimento */
+  updateSpeedometer(S.target, true);
+
+  if (!$("#infoCard").hidden)
+    renderInfo();
+}
+
+/* ===================== TEMA ===================== */
+function initializeTheme() {
+  $$("[data-themeseg]").forEach(el => {
+    el.innerHTML = [
+      ["light", "☀️", "Claro"],
+      ["dark", "🌙", "Escuro"],
+      ["auto", "⚙️", "Automático"]
+    ]
+      .map(
+        ([k, i, l]) =>
+          `<button data-tc="${k}" title="${l}" aria-label="${l}">
+            <span aria-hidden="true">${i}</span>
+            <span class="lb">${l}</span>
+          </button>`
+      )
+      .join("");
+  });
+
+  mq.addEventListener("change", () =>
+    S.theme === "auto" && applyTheme()
+  );
+
+  applyTheme();
+}
+
+function applyTheme() {
+  document.documentElement.dataset.theme =
+    S.theme === "dark" ||
+    (S.theme === "auto" && mq.matches)
+      ? "dark"
+      : "light";
+
+  $$("[data-tc]").forEach(b =>
+    b.setAttribute(
+      "aria-pressed",
+      b.dataset.tc === S.theme
+    )
+  );
+
+  drawChart();
+}
+
+/* ===================== VELOCÍMETRO ===================== */
+const R = 118;
+const CIRC = 2 * Math.PI * R;
+const ARC = CIRC * 0.75;
+
+const MARKS = [
+  0, 5, 10, 25, 50, 100, 250, 500, 1000
+];
+
+/*
+ * O ponteiro utiliza escala logarítmica:
+ * 0 → começo
+ * 1000 → final
+ */
+const frac = v =>
+  Math.min(
+    1,
+    Math.log10(1 + Math.max(0, v)) /
+    Math.log10(1001)
+  );
+
+/*
+ * Suavização do ponteiro.
+ *
+ * Quanto menor o valor, mais "pesado" fica o ponteiro.
+ * 0.09 = movimento bem suave.
+ */
+const NEEDLE_EASE = 0.09;
+
+let raf = 0;
+
+function initializeSpeedometer() {
+  $("#ticks").innerHTML = MARKS.map(m => {
+    const a =
+      (-135 + frac(m) * 270) *
+      Math.PI / 180;
+
+    return `
+      <text
+        x="${150 + 134 * Math.sin(a)}"
+        y="${153 - 134 * Math.cos(a)}"
+        text-anchor="middle"
+      >${m}</text>
+    `;
+  }).join("");
+
+  $("#track").setAttribute(
+    "stroke-dasharray",
+    `${ARC} ${CIRC}`
+  );
+
+  /* começa realmente em zero */
+  updateSpeedometer(0, true);
+}
+
+function updateSpeedometer(v, snap = false) {
+  S.target = Math.max(0, Number(v) || 0);
+
+  /*
+   * "snap" só é usado quando precisamos sincronizar
+   * o indicador instantaneamente, como ao resetar a UI.
+   */
+  if (snap || reduced()) {
+    S.cur = S.target;
+  }
+
+  cancelAnimationFrame(raf);
+  tick();
+}
+
+function tick() {
+  const d = S.target - S.cur;
+
+  /*
+   * Interpolação mais lenta e contínua.
+   * Isso evita que o ponteiro "teleporte" entre amostras.
+   */
+  if (Math.abs(d) < 0.01) {
+    S.cur = S.target;
+  } else {
+    S.cur += d * NEEDLE_EASE;
+  }
+
+  const f = frac(S.cur);
+
+  $("#arc").setAttribute(
+    "stroke-dasharray",
+    `${f * ARC} ${CIRC}`
+  );
+
+  $("#needle").setAttribute(
+    "transform",
+    `rotate(${-135 + f * 270} 150 150)`
+  );
+
+  $("#speedVal").textContent =
+    conv(S.cur).toFixed(2);
+
+  if (Math.abs(S.cur - S.target) > 0.01) {
+    raf = requestAnimationFrame(tick);
+  }
+}
+
+/* ===================== GRÁFICO ===================== */
+let cv, ctx;
+
+const SAMPLE_MS = 200;
+
+function initializeChart() {
+  cv = $("#chart");
+  ctx = cv.getContext("2d");
+
+  new ResizeObserver(drawChart).observe(cv);
+}
+
+function updateChart(v) {
+  S.samples.push(v);
+  drawChart();
+}
+
+function drawChart() {
+  if (!ctx) return;
+
+  const dpr = devicePixelRatio || 1;
+  const w = cv.clientWidth;
+  const h = cv.clientHeight;
+
+  if (!w) return;
+
+  if (
+    cv.width !== Math.round(w * dpr) ||
+    cv.height !== Math.round(h * dpr)
+  ) {
+    cv.width = Math.round(w * dpr);
+    cv.height = Math.round(h * dpr);
+  }
+
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.clearRect(0, 0, w, h);
+
+  const cs = getComputedStyle(document.documentElement);
+
+  const c1 =
+    cs.getPropertyValue("--primary").trim();
+
+  const c2 =
+    cs.getPropertyValue("--accent").trim();
+
+  ctx.strokeStyle =
+    cs.getPropertyValue("--border");
+
+  ctx.lineWidth = 1;
+
+  for (let i = 1; i < 4; i++) {
+    ctx.beginPath();
+    ctx.moveTo(0, h * i / 4);
+    ctx.lineTo(w, h * i / 4);
+    ctx.stroke();
+  }
+
+  const s = S.samples;
+
+  if (s.length < 2)
+    return;
+
+  const N = Math.ceil(
+    CFG.duration / SAMPLE_MS
+  );
+
+  const top =
+    Math.max(...s) * 1.2 || 1;
+
+  const pad = 8;
+
+  const P = s.map((v, i) => [
+    i / Math.max(1, N - 1) * w,
+    h - pad -
+      v / top * (h - 2 * pad)
+  ]);
+
+  ctx.beginPath();
+  ctx.moveTo(...P[0]);
+
+  for (
+    let i = 1;
+    i < P.length - 1;
+    i++
+  ) {
+    ctx.quadraticCurveTo(
+      P[i][0],
+      P[i][1],
+      (P[i][0] + P[i + 1][0]) / 2,
+      (P[i][1] + P[i + 1][1]) / 2
+    );
+  }
+
+  const l = P[P.length - 1];
+
+  ctx.lineTo(l[0], l[1]);
+
+  const g =
+    ctx.createLinearGradient(0, 0, w, 0);
+
+  g.addColorStop(0, c2);
+  g.addColorStop(1, c1);
+
+  ctx.strokeStyle = g;
+  ctx.lineWidth = 2.5;
+  ctx.lineJoin = "round";
+  ctx.stroke();
+
+  ctx.lineTo(l[0], h);
+  ctx.lineTo(P[0][0], h);
+  ctx.closePath();
+
+  const f =
+    ctx.createLinearGradient(0, 0, 0, h);
+
+  f.addColorStop(0, c1 + "55");
+  f.addColorStop(1, c1 + "00");
+
+  ctx.fillStyle = f;
+  ctx.fill();
+}
+
+/* ===================== INTERFACE ===================== */
+const STEPS = [
+  "ping",
+  "down",
+  "up"
+];
+
+function setStep(cur) {
+  const ci = STEPS.indexOf(cur);
+
+  STEPS.forEach((k, i) => {
+    $(`[data-step=${k}]`).className =
+      cur === "end" || i < ci
+        ? "done"
+        : i === ci
+          ? "active"
+          : "";
+  });
+}
+
+const setStatus = t =>
+  $("#status").textContent = t;
+
+function showNotice(m) {
+  const n = $("#notice");
+  n.textContent = m;
+  n.hidden = false;
+}
+
+function renderMetrics() {
+  const r = S.res;
+
+  const set = (id, v) =>
+    $(id).textContent = v;
+
+  set(
+    "#mPing",
+    r.ping != null
+      ? r.ping.toFixed(0)
+      : "--"
+  );
+
+  set(
+    "#mJit",
+    r.jitter != null
+      ? r.jitter.toFixed(1)
+      : "--"
+  );
+
+  set(
+    "#mDown",
+    r.down != null
+      ? fmt(r.down)
+      : "--"
+  );
+
+  set(
+    "#mUp",
+    r.up != null
+      ? fmt(r.up)
+      : "--"
+  );
+
+  $$(".u").forEach(
+    e => e.textContent = S.unit
+  );
+}
+
+function showPhaseStats(cur, avg) {
+  $("#stCur").textContent = fmt(cur);
+  $("#stAvg").textContent = fmt(avg);
+  $("#stMax").textContent = fmt(S.max);
+}
+
+function resetUI() {
+  S.res = {};
+  S.samples = [];
+  S.max = 0;
+
+  /* reseta também a memória da suavização */
+  S.smoothWindow = [];
+  S.smoothValue = 0;
+
+  renderMetrics();
+  drawChart();
+  setStep("");
+
+  /*
+   * Reinicia diretamente em 0.
+   * Não existe mais a animação 0 → 1000 → 0.
+   */
+  updateSpeedometer(0, true);
+
+  [
+    "#stCur",
+    "#stAvg",
+    "#stMax"
+  ].forEach(s =>
+    $(s).textContent = "--"
+  );
+
+  $("#chartTitle").textContent =
+    "Velocidade em tempo real";
+
+  $("#notice").hidden =
+    $("#infoCard").hidden =
+    $("#qWrap").hidden = true;
+
+  document.body.classList.remove(
+    "done-glow"
+  );
+}
+
+function setButton(txt, busy) {
+  const b = $("#startBtn");
+
+  b.textContent = txt;
+  b.disabled = busy;
+
+  document.body.classList.toggle(
+    "testing",
+    busy
+  );
+}
+
+/* ===================== SUAVIZAÇÃO ===================== */
+
+/*
+ * Mediana elimina valores isolados muito altos/baixos.
+ *
+ * Exemplo:
+ * 300, 305, 309, 1200, 302
+ *
+ * O 1200 é tratado como pico isolado.
+ */
+function median(values) {
+  if (!values.length)
+    return 0;
+
+  const a = [...values].sort(
+    (x, y) => x - y
+  );
+
+  const mid = Math.floor(a.length / 2);
+
+  return a.length % 2
+    ? a[mid]
+    : (a[mid - 1] + a[mid]) / 2;
+}
+
+/*
+ * Combina:
+ * 1. janela de mediana
+ * 2. suavização exponencial
+ *
+ * Resultado:
+ * a medição visual não oscila brutalmente.
+ */
+function stabilizeThroughput(raw) {
+  const WINDOW = 5;
+  const EMA = 0.28;
+
+  S.smoothWindow.push(
+    Math.max(0, raw)
+  );
+
+  if (
+    S.smoothWindow.length >
+    WINDOW
+  ) {
+    S.smoothWindow.shift();
+  }
+
+  const med = median(
+    S.smoothWindow
+  );
+
+  if (!S.smoothValue) {
+    S.smoothValue = med;
+  } else {
+    S.smoothValue =
+      S.smoothValue * (1 - EMA) +
+      med * EMA;
+  }
+
+  return S.smoothValue;
+}
+
+/* ===================== TESTE ===================== */
+async function startSpeedTest() {
+  if (S.running)
+    return;
+
+  if (!window.fetch || !window.performance) {
+    return showNotice(
+      "Seu navegador não tem suporte às APIs necessárias (fetch / performance). Atualize ou troque de navegador."
+    );
+  }
+
+  if (navigator.onLine === false) {
+    return showNotice(
+      "Você parece estar sem conexão com a internet. Conecte-se e tente novamente."
+    );
+  }
+
+  S.running = true;
+
+  resetUI();
+  setButton("TESTANDO...", true);
+
+  try {
+    setStatus("Preparando teste...");
+
+    const metaP = loadMeta();
+
+    /*
+     * Antes havia:
+     *
+     * updateSpeedometer(1000);
+     * await sleep(...);
+     * updateSpeedometer(0);
+     *
+     * Isso causava o pico artificial.
+     *
+     * Agora o ponteiro permanece em 0.
+     */
+    await prepare();
+
+    setStep("ping");
+    setStatus("Medindo ping...");
+    await measurePing();
+
+    setStep("down");
+    setStatus("Testando download...");
+    await measureDownload();
+
+    setStep("up");
+    setStatus("Testando upload...");
+    await measureUpload();
+
+    setStep("end");
+    setStatus("Finalizando...");
+
+    await metaP;
+    await sleep(
+      reduced() ? 50 : 450
+    );
+
+    showResults();
+    saveResult();
+
+    setStatus("Teste concluído");
+    setButton(
+      "TESTAR NOVAMENTE",
+      false
+    );
+
+  } catch (e) {
+    showNotice(
+      e.message ||
+      "Não foi possível concluir a medição. Verifique sua conexão e tente novamente."
+    );
+
+    setStep("");
+    updateSpeedometer(0);
+
+    setStatus("Teste interrompido");
+
+    setButton(
+      "TENTAR NOVAMENTE",
+      false
+    );
+
+  } finally {
+    S.running = false;
+  }
+}
+
+async function prepare() {
+  /*
+   * Pequeno tempo de preparação visual.
+   * O ponteiro permanece em 0 durante toda essa fase.
+   */
+  updateSpeedometer(0, true);
+
+  await sleep(
+    reduced() ? 60 : 350
+  );
+}
+
+function fail(step, e) {
+  const m =
+    e && e.name === "AbortError"
+      ? `Tempo esgotado na etapa de ${step}. Verifique sua conexão e tente novamente.`
+      : e instanceof TypeError
+        ? `Falha na etapa de ${step}: o endpoint está indisponível, foi bloqueado por CORS ou você está sem conexão. Confira SPEED_TEST_CONFIG e a rede.`
+        : "Não foi possível concluir a medição. Verifique sua conexão e tente novamente.";
+
+  return new Error(m);
+}
+
+const fetchT = (url, ms) => {
+  const c = new AbortController();
+
+  const t = setTimeout(
+    () => c.abort(),
+    ms
+  );
+
+  return fetch(
+    bust(url),
+    {
+      cache: "no-store",
+      signal: c.signal
+    }
+  ).finally(() =>
+    clearTimeout(t)
+  );
+};
+
+async function loadMeta() {
+  if (!CFG.metaUrl)
+    return;
+
+  try {
+    S.meta =
+      await (
+        await fetchT(
+          CFG.metaUrl,
+          CFG.timeout
+        )
+      ).json();
+
+  } catch {
+    S.meta = null;
+  }
+}
+
+/* ===================== PING ===================== */
+async function measurePing() {
+  const t = [];
+
+  try {
+    for (
+      let i = 0;
+      i < CFG.pingCount;
+      i++
+    ) {
+      const a = performance.now();
+
+      const r = await fetchT(
+        CFG.pingUrl,
+        CFG.timeout
+      );
+
+      await r.arrayBuffer();
+
+      const d =
+        performance.now() - a;
+
+      if (i > 0)
+        t.push(d);
+
+      if (t.length) {
+        S.res.ping =
+          [...t].sort(
+            (x, y) => x - y
+          )[Math.floor(t.length / 2)];
+
+        S.res.jitter =
+          t.length > 1
+            ? t.slice(1).reduce(
+                (s, x, j) =>
+                  s +
+                  Math.abs(
+                    x - t[j]
+                  ),
+                0
+              ) /
+              (t.length - 1)
+            : 0;
+
+        renderMetrics();
+      }
+
+      await sleep(80);
+    }
+
+  } catch (e) {
+    throw fail("ping", e);
+  }
+}
+
+/* ===================== DOWNLOAD ===================== */
+async function dlWorker(st) {
+  while (
+    !st.ac.signal.aborted
+  ) {
+    try {
+      const r = await fetch(
+        bust(CFG.downloadUrl),
+        {
+          cache: "no-store",
+          signal: st.ac.signal
+        }
+      );
+
+      if (!r.ok)
+        throw new Error(
+          "HTTP " + r.status
+        );
+
+      if (
+        r.body &&
+        r.body.getReader
+      ) {
+        const rd =
+          r.body.getReader();
+
+        for (;;) {
+          const {
+            done,
+            value
+          } = await rd.read();
+
+          if (done)
+            break;
+
+          st.bytes +=
+            value.length;
+        }
+
+      } else {
+        st.bytes +=
+          (
+            await r.arrayBuffer()
+          ).byteLength;
+      }
+
+    } catch (e) {
+      if (!st.ac.signal.aborted)
+        st.fail = e;
+
+      return;
+    }
+  }
+}
+
+/* ===================== UPLOAD ===================== */
+let PAYLOAD;
+
+async function ulWorker(st) {
+  if (!PAYLOAD) {
+    const c =
+      crypto.getRandomValues(
+        new Uint8Array(65536)
+      );
+
+    const a =
+      new Uint8Array(
+        65536 * 64
+      );
+
+    for (
+      let i = 0;
+      i < 64;
+      i++
+    ) {
+      a.set(
+        c,
+        i * 65536
+      );
+    }
+
+    PAYLOAD =
+      new Blob([a]);
+  }
+
+  while (
+    !st.ac.signal.aborted &&
+    !st.fail
+  ) {
+    await new Promise(res => {
+      const x =
+        new XMLHttpRequest();
+
+      let last = 0;
+
+      st.xhrs.push(x);
+
+      x.open(
+        "POST",
+        bust(CFG.uploadUrl)
+      );
+
+      x.timeout =
+        CFG.timeout * 3;
+
+      x.upload.onprogress = e => {
+        st.bytes +=
+          e.loaded - last;
+
+        last = e.loaded;
+      };
+
+      x.onerror = () => {
+        if (!st.ac.signal.aborted) {
+          st.fail =
+            new TypeError(
+              "upload"
+            );
+        }
+
+        res();
+      };
+
+      x.onload = () => {
+        if (x.status >= 400) {
+          st.fail =
+            new Error(
+              "HTTP " + x.status
+            );
+        }
+
+        res();
+      };
+
+      x.onabort =
+        x.ontimeout = () =>
+          res();
+
+      x.send(PAYLOAD);
+    });
+  }
+}
+
+/* ===================== THROUGHPUT ===================== */
+async function measureThroughput(
+  key,
+  worker
+) {
+  const st = {
+    bytes: 0,
+    fail: null,
+    ac: new AbortController(),
+    xhrs: []
+  };
+
+  S.samples = [];
+  S.max = 0;
+
+  /* reinicia suavização de cada etapa */
+  S.smoothWindow = [];
+  S.smoothValue = 0;
+
+  drawChart();
+
+  const t0 = performance.now();
+
+  let lt = t0;
+  let lb = 0;
+
+  let cur = 0;
+
+  let wb = 0;
+  let wt = t0;
+
+  let warm = false;
+
+  let sum = 0;
+  let n = 0;
+
+  for (
+    let i = 0;
+    i < CFG.streams;
+    i++
+  ) {
+    worker(st);
+  }
+
+  await new Promise(res => {
+    const id =
+      setInterval(() => {
+        const now =
+          performance.now();
+
+        const b =
+          st.bytes;
+
+        const elapsed =
+          now - lt;
+
+        /*
+         * Velocidade instantânea real.
+         */
+        const inst =
+          elapsed > 0
+            ? (b - lb) *
+              8 /
+              (1e3 * elapsed)
+            : 0;
+
+        lt = now;
+        lb = b;
+
+        /*
+         * Primeiro remove picos isolados,
+         * depois suaviza.
+         */
+        const stable =
+          stabilizeThroughput(
+            inst
+          );
+
+        /*
+         * Cur representa o valor visual
+         * estável utilizado no medidor.
+         *
+         * Isso evita que um pacote isolado,
+         * mudança de buffer ou rajada de dados
+         * cause um pico enorme na interface.
+         */
+        cur = stable;
+
+        /*
+         * Ignora o primeiro segundo
+         * para as estatísticas de fase.
+         */
+        if (
+          !warm &&
+          now - t0 > 1000
+        ) {
+          warm = true;
+          wb = b;
+          wt = now;
+        }
+
+        S.max = Math.max(
+          S.max,
+          cur
+        );
+
+        if (warm) {
+          sum += cur;
+          n++;
+        }
+
+        /*
+         * A interface recebe somente
+         * o valor estabilizado.
+         */
+        S.res[key] = cur;
+
+        renderMetrics();
+
+        updateSpeedometer(cur);
+
+        updateChart(cur);
+
+        showPhaseStats(
+          cur,
+          n ? sum / n : cur
+        );
+
+        if (
+          now - t0 >=
+            CFG.duration ||
+          (st.fail && !b)
+        ) {
+          clearInterval(id);
+          res();
+        }
+
+      }, SAMPLE_MS);
+  });
+
+  st.ac.abort();
+
+  st.xhrs.forEach(
+    x => x.abort()
+  );
+
+  if (!st.bytes) {
+    throw (
+      st.fail ||
+      new TypeError("sem dados")
+    );
+  }
+
+  /*
+   * Resultado final continua sendo
+   * calculado diretamente pelos bytes reais.
+   * A suavização serve apenas para a interface.
+   */
+  const now =
+    performance.now();
+
+  return warm
+    ? (st.bytes - wb) *
+      8 /
+      (1e3 * (now - wt))
+    : st.bytes *
+      8 /
+      (1e3 * (now - t0));
+}
+
+async function measureDownload() {
+  $("#chartTitle").textContent =
+    "Download em tempo real (" +
+    S.unit +
+    ")";
+
+  try {
+    S.res.down =
+      await measureThroughput(
+        "down",
+        dlWorker
+      );
+
+  } catch (e) {
+    throw fail(
+      "download",
+      e
+    );
+  }
+
+  renderMetrics();
+}
+
+async function measureUpload() {
+  $("#chartTitle").textContent =
+    "Upload em tempo real (" +
+    S.unit +
+    ")";
+
+  try {
+    S.res.up =
+      await measureThroughput(
+        "up",
+        ulWorker
+      );
+
+  } catch (e) {
+    throw fail(
+      "upload",
+      e
+    );
+  }
+
+  renderMetrics();
+}
+
+/* ===================== RESULTADOS ===================== */
+function countTo(
+  sel,
+  to,
+  dec
+) {
+  const el = $(sel);
+
+  if (reduced()) {
+    el.textContent =
+      to.toFixed(dec);
+
+    return;
+  }
+
+  const t0 =
+    performance.now();
+
+  const D = 1100;
+
+  (function f(n) {
+    const p =
+      Math.min(
+        1,
+        (n - t0) / D
+      );
+
+    el.textContent =
+      (
+        to *
+        (1 -
+          Math.pow(
+            1 - p,
+            3
+          ))
+      ).toFixed(dec);
+
+    if (p < 1)
+      requestAnimationFrame(f);
+
+  })(t0);
+}
+
+function showResults() {
+  const r = S.res;
+
+  /*
+   * O valor final também chega suavemente
+   * ao resultado, sem "teleporte".
+   */
+  updateSpeedometer(r.down);
+
+  countTo(
+    "#mDown",
+    conv(r.down),
+    2
+  );
+
+  countTo(
+    "#mUp",
+    conv(r.up),
+    2
+  );
+
+  countTo(
+    "#mPing",
+    r.ping,
+    0
+  );
+
+  countTo(
+    "#mJit",
+    r.jitter,
+    1
+  );
+
+  $$(".tile").forEach(t => {
+    t.classList.remove("glow");
+    void t.offsetWidth;
+    t.classList.add("glow");
+  });
+
+  document.body.classList.add(
+    "done-glow"
+  );
+
+  const l =
+    r.down >= 100 &&
+    r.ping < 30
+      ? "excelente"
+      : r.down >= 25 &&
+        r.ping < 80
+        ? "boa"
+        : r.down >= 5 &&
+          r.ping < 150
+          ? "regular"
+          : "baixa";
+
+  const q = $("#quality");
+
+  q.dataset.l = l;
+  q.textContent =
+    l.toUpperCase();
+
+  $("#qWrap").hidden = false;
+
+  renderInfo();
+
+  $("#infoCard").hidden = false;
+}
+
+function renderInfo() {
+  const c =
+    navigator.connection || {};
+
+  const m =
+    S.meta || {};
+
+  const r =
+    S.res;
+
+  const colo =
+    m.colo &&
+    typeof m.colo === "object"
+      ? (
+          m.colo.city ||
+          m.colo.iata
+        )
+      : m.colo;
+
+  let host = "";
+
+  try {
+    host =
+      new URL(
+        CFG.downloadUrl
+      ).hostname;
+  } catch {}
+
+  const rows = [
+    ["IP público", m.clientIp],
+    [
+      "Servidor",
+      [m.city, colo]
+        .filter(Boolean)
+        .join(" · ") ||
+        host
+    ],
+    [
+      "Tipo de conexão",
+      c.type
+    ],
+    [
+      "Tecnologia estimada",
+      c.effectiveType &&
+        c.effectiveType.toUpperCase()
+    ],
+    [
+      "RTT (navegador)",
+      c.rtt != null &&
+        c.rtt + " ms"
+    ],
+    [
+      "Downlink (navegador)",
+      c.downlink != null &&
+        c.downlink + " Mbps"
+    ],
+    [
+      "Economia de dados",
+      c.saveData != null &&
+        (
+          c.saveData
+            ? "Ativada"
+            : "Desativada"
+        )
+    ],
+    [
+      "Latência",
+      r.ping.toFixed(0) +
+        " ms"
+    ],
+    [
+      "Jitter",
+      r.jitter.toFixed(1) +
+        " ms"
+    ],
+    [
+      "Download",
+      fmt(r.down) +
+        " " +
+        S.unit
+    ],
+    [
+      "Upload",
+      fmt(r.up) +
+        " " +
+        S.unit
+    ]
+  ];
+
+  $("#info").innerHTML =
+    rows
+      .map(
+        ([k, v]) =>
+          `<div>
+            <dt>${k}</dt>
+            <dd>${v ? clean(v) : "Não disponível"}</dd>
+          </div>`
+      )
+      .join("");
+}
+
+/* ===================== HISTÓRICO ===================== */
+const HK =
+  "netspeed.history";
+
+function saveResult() {
+  const h =
+    store.get(HK, []);
+
+  h.unshift({
+    t: Date.now(),
+    d: S.res.down,
+    u: S.res.up,
+    p: S.res.ping
+  });
+
+  store.set(
+    HK,
+    h.slice(0, 10)
+  );
+
+  loadHistory();
+}
+
+function loadHistory() {
+  const h =
+    store.get(HK, []);
+
+  $("#hist").innerHTML =
+    Array.isArray(h) &&
+    h.length
+      ? h
+          .map(x => {
+            const d =
+              new Date(x.t);
+
+            return `
+              <li>
+                <time datetime="${d.toISOString()}">
+                  ${d.toLocaleDateString("pt-BR")}
+                  —
+                  ${d.toLocaleTimeString(
+                    "pt-BR",
+                    {
+                      hour: "2-digit",
+                      minute: "2-digit"
+                    }
+                  )}
+                </time>
+
+                <span>
+                  ↓ ${conv(x.d).toFixed(0)}
+                  ${S.unit}
+                </span>
+
+                <span>
+                  ↑ ${conv(x.u).toFixed(0)}
+                  ${S.unit}
+                </span>
+
+                <span>
+                  ◉ ${Number(x.p).toFixed(0)}
+                  ms
+                </span>
+              </li>
+            `;
+          })
+          .join("")
+
+      : '<li class="empty">Nenhum teste salvo ainda. Faça o primeiro teste!</li>';
+}
+
+function clearHistory() {
+  store.set(HK, []);
+  loadHistory();
+}
+
+initializeApp();
+</script></body>
+</html>writing{variant="document" title="NetSpeed — medidor suavizado e sem pico inicial" id="58321"}
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>NetSpeed</title>
+<style>
+/* ===== Paleta (edite as variáveis para trocar as cores) ===== */
+*{box-sizing:border-box;margin:0}
+:root,[data-theme=light]{--bg:#eef2fb;--surface:rgba(255,255,255,.72);--text:#0e1630;--muted:#586380;--primary:#3557ff;--accent:#00b3d1;--border:rgba(14,22,48,.1);--shadow:0 12px 40px rgba(40,60,140,.14);--track:rgba(14,22,48,.08)}
+[data-theme=dark]{--bg:#070b18;--surface:rgba(20,28,54,.62);--text:#e9eeff;--muted:#93a0c4;--primary:#7290ff;--accent:#22e0d0;--border:rgba(160,180,255,.15);--shadow:0 12px 40px rgba(0,0,0,.5);--track:rgba(160,180,255,.12);color-scheme:dark}
+[hidden]{display:none!important}
+body{font:16px/1.5 ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color:var(--text);min-height:100vh;overflow-x:hidden;
+background:radial-gradient(50rem 32rem at 8% -8%,color-mix(in srgb,var(--primary) 24%,transparent),transparent),radial-gradient(44rem 30rem at 100% 10%,color-mix(in srgb,var(--accent) 18%,transparent),transparent),var(--bg);transition:background-color .4s,color .4s}
+:focus-visible{outline:3px solid var(--primary);outline-offset:3px}
+button,select{font:inherit;color:inherit}
+.wrap{width:min(1080px,100% - 32px);margin:0 auto}
+header{position:sticky;top:0;z-index:5;backdrop-filter:blur(16px);background:color-mix(in srgb,var(--bg) 70%,transparent);border-bottom:1px solid var(--border);transition:background-color .4s}
+.bar{display:flex;align-items:center;justify-content:space-between;gap:12px;height:64px}
+.logo{display:flex;align-items:center;gap:10px;font-weight:750;font-size:1.25rem;letter-spacing:-.02em;color:var(--text);text-decoration:none}
+.logo svg{width:32px;height:32px;padding:6px;border-radius:10px;background:linear-gradient(135deg,var(--accent),var(--primary));fill:#fff}
+.tools{display:flex;align-items:center;gap:8px}
+.seg{display:flex;padding:3px;border:1px solid var(--border);border-radius:999px;background:var(--track)}
+.seg button{border:0;background:none;color:var(--muted);padding:6px 11px;border-radius:999px;cursor:pointer;font-size:.85rem;transition:background .25s,color .25s}
+.seg [aria-pressed=true]{background:var(--bg);color:var(--text);box-shadow:0 1px 6px rgba(0,0,0,.15)}
+.icon,.ghost{border:1px solid var(--border);background:var(--surface);border-radius:999px;cursor:pointer;transition:transform .2s,border-color .2s}
+.icon{width:38px;height:38px}.ghost{padding:7px 14px;font-size:.85rem}
+.icon:hover,.ghost:hover{transform:translateY(-1px);border-color:var(--primary)}
+.intro{text-align:center;padding:36px 0 22px}
+h1{font-size:clamp(1.6rem,4.5vw,2.6rem);letter-spacing:-.03em;line-height:1.15}
+.intro p{color:var(--muted);margin-top:8px}
+h2{font-size:1.05rem;letter-spacing:-.01em}
+.notice{margin:0 0 16px;padding:14px 18px;border-radius:16px;background:color-mix(in srgb,#ef4444 14%,var(--surface));border:1px solid #ef4444;animation:rise .4s}
+.grid{display:grid;gap:20px;grid-template-columns:1fr;margin-bottom:20px}
+.grid>*{min-width:0}
+@media(min-width:900px){.grid.a{grid-template-columns:1.05fr 1fr}}
+.grid.b{grid-template-columns:repeat(auto-fit,minmax(min(100%,340px),1fr))}
+.side{display:grid;gap:20px;align-content:start}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:24px;box-shadow:var(--shadow);backdrop-filter:blur(18px);padding:clamp(18px,3vw,28px);animation:rise .6s both;transition:background-color .4s,border-color .4s}
+.grid>:nth-child(2){animation-delay:.1s}
+.ch{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px}
+/* ===== Velocímetro ===== */
+.gauge{position:relative;width:min(100%,420px);margin:0 auto}
+.gauge svg{width:100%;display:block;overflow:visible}
+.gauge text{font-size:9px;fill:var(--muted);font-variant-numeric:tabular-nums}
+#track{fill:none;stroke:var(--track);stroke-width:12;stroke-linecap:round}
+#arc{fill:none;stroke:url(#g);stroke-width:12;stroke-linecap:round;filter:drop-shadow(0 0 6px color-mix(in srgb,var(--primary) 55%,transparent))}
+.dash{fill:none;stroke:var(--border);stroke-width:1;stroke-dasharray:2 5}
+#needle line{stroke:var(--text);stroke-width:3;stroke-linecap:round}
+#needle circle{fill:var(--primary);stroke:var(--bg);stroke-width:3}
+.readout{position:absolute;left:0;right:0;top:57%;text-align:center}
+#speedVal{display:block;font-size:clamp(2.2rem,10vw,3.5rem);font-weight:750;letter-spacing:-.03em;line-height:1;font-variant-numeric:tabular-nums}
+#unit{color:var(--muted);font-size:.95rem}
+#status{font-size:.9rem;font-weight:600;margin-top:4px}
+.testing .gauge{animation:pulse 1.8s ease-in-out infinite}
+.done-glow #arc{animation:glow 1.4s}
+.cta{display:block;margin:14px auto 22px;width:min(100%,320px);padding:18px 24px;border:0;border-radius:999px;cursor:pointer;color:#fff;font-weight:750;font-size:1.1rem;letter-spacing:.06em;background:linear-gradient(135deg,var(--accent),var(--primary));box-shadow:0 10px 30px color-mix(in srgb,var(--primary) 45%,transparent);transition:transform .25s,box-shadow .25s,opacity .25s}
+.cta:hover:not(:disabled){transform:translateY(-3px) scale(1.02);box-shadow:0 16px 40px color-mix(in srgb,var(--primary) 55%,transparent)}
+.cta:disabled{opacity:.6;cursor:progress}
+.steps{list-style:none;padding:0;display:flex;gap:8px;justify-content:center}
+.steps li{flex:1;display:flex;align-items:center;justify-content:center;gap:8px;padding:10px 6px;border-radius:14px;border:1px solid var(--border);color:var(--muted);font-size:.9rem;transition:all .3s}
+.dot::before{content:"○"}
+.steps .active{color:var(--text);border-color:var(--primary);background:color-mix(in srgb,var(--primary) 10%,transparent)}
+.active .dot::before{content:"●";color:var(--primary);animation:blink 1s infinite}
+.steps .done{color:var(--text)}
+.done .dot::before{content:"✓";color:var(--accent);font-weight:800;display:inline-block;animation:pop .45s}
+canvas{width:100%;height:190px;display:block}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px;text-align:center}
+.stats dt{color:var(--muted);font-size:.8rem}.stats dd{font-weight:700;font-variant-numeric:tabular-nums}
+.tiles{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px}
+.tile{padding:14px;border-radius:18px;border:1px solid var(--border);background:var(--track)}
+.tile .k{display:block;color:var(--muted);font-size:.85rem}
+.tile b{font-size:clamp(1.3rem,4.5vw,1.85rem);letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.tile small{color:var(--muted);font-size:.8rem;font-weight:500}
+.tile.glow{animation:glow 1.4s}
+.q{display:inline-block;margin-top:16px;padding:6px 16px;border-radius:999px;font-weight:750;letter-spacing:.05em;color:#fff;background:var(--c,#888);animation:pop .5s}
+#qHint{display:block;margin-top:6px;color:var(--muted);font-size:.82rem}
+.q[data-l=excelente]{--c:#16a870}.q[data-l=boa]{--c:#2b8fe0}.q[data-l=regular]{--c:#d98a0b}.q[data-l=baixa]{--c:#dc3c3c}
+.info{display:grid;gap:2px;margin-top:8px}
+.info div{display:flex;justify-content:space-between;gap:12px;padding:8px 0;border-bottom:1px solid var(--border);font-size:.92rem}
+.info dt{color:var(--muted)}.info dd{font-weight:600;text-align:right;overflow-wrap:anywhere}
+#hist{list-style:none;padding:0}
+#hist li{display:flex;flex-wrap:wrap;gap:4px 14px;padding:10px 0;border-bottom:1px solid var(--border);font-size:.9rem;font-variant-numeric:tabular-nums}
+#hist time{flex-basis:100%;color:var(--muted);font-size:.8rem}
+#hist .empty{color:var(--muted)}
+.foot{color:var(--muted);font-size:.8rem;text-align:center;padding:8px 0 40px}
+
+/* ===== Configurações ===== */
+dialog{margin:auto;width:min(420px,calc(100% - 32px));border:1px solid var(--border);border-radius:24px;padding:0;background:var(--bg);color:var(--text);box-shadow:var(--shadow)}
+dialog[open]{animation:pop .3s}
+dialog::backdrop{background:rgba(5,10,25,.55);backdrop-filter:blur(4px)}
+.dbody{padding:22px}
+.row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 0;border-bottom:1px solid var(--border)}
+dialog .seg .lb{display:inline!important}
+select{padding:8px 10px;border-radius:10px;border:1px solid var(--border);background:var(--surface)}
+input[type=checkbox]{width:22px;height:22px;accent-color:var(--primary)}
+@media(max-width:560px){.seg .lb{display:none}.logo{font-size:1.1rem}.card{border-radius:20px}.steps li{font-size:.8rem;gap:4px}}
+
+/* ===== Animações ===== */
+@keyframes rise{from{opacity:0;transform:translateY(14px)}}
+@keyframes pop{from{opacity:0;transform:scale(.7)}}
+@keyframes blink{50%{opacity:.35}}
+@keyframes pulse{50%{filter:drop-shadow(0 0 18px color-mix(in srgb,var(--primary) 45%,transparent))}}
+@keyframes glow{0%,100%{box-shadow:none}40%{box-shadow:0 0 0 3px var(--accent),0 0 28px var(--accent)}}
+@media(prefers-reduced-motion:reduce){*,*::before{animation:none!important;transition:none!important}}
+[data-motion=off] *,[data-motion=off] *::before{animation:none!important;transition:none!important}
+</style>
+</head>
+
+<body>
+<header>
+  <div class="wrap bar">
+    <a class="logo" href="./" aria-label="Início">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M13 2 4 14h6l-1 8 9-12h-6z"/>
+      </svg>
+      <span id="appName">NetSpeed</span>
+    </a>
+
+    <div class="tools">
+      <div class="seg" data-themeseg role="group" aria-label="Tema"></div>
+      <button class="icon" id="openSettings" aria-label="Abrir configurações">⚙</button>
+    </div>
+  </div>
+</header>
+
+<main class="wrap" id="app">
+  <div class="intro">
+    <h1>Teste a velocidade da sua conexão</h1>
+    <p>Latência, download e upload medidos de verdade, direto no navegador.</p>
+  </div>
+
+  <p id="notice" class="notice" role="alert" hidden></p>
+
+  <div class="grid a">
+    <section class="card" aria-label="Teste de velocidade">
+      <div class="gauge">
+        <svg viewBox="0 0 300 300" role="img" aria-label="Velocímetro circular. Os valores em texto estão sempre disponíveis nos resultados.">
+          <defs>
+            <linearGradient id="g" x1="0" y1="1" x2="1" y2="0">
+              <stop offset="0" style="stop-color:var(--accent)"/>
+              <stop offset="1" style="stop-color:var(--primary)"/>
+            </linearGradient>
+          </defs>
+
+          <circle class="dash" cx="150" cy="150" r="146"/>
+          <circle id="track" cx="150" cy="150" r="118" transform="rotate(135 150 150)"/>
+          <circle id="arc" cx="150" cy="150" r="118" transform="rotate(135 150 150)"/>
+          <g id="ticks"></g>
+
+          <g id="needle">
+            <line x1="150" y1="150" x2="150" y2="62"/>
+            <circle cx="150" cy="150" r="8"/>
+          </g>
+        </svg>
+
+        <div class="readout">
+          <output id="speedVal">0.00</output>
+          <span id="unit">Mbps</span>
+          <p id="status" role="status" aria-live="polite">Pronto para testar</p>
+        </div>
+      </div>
+
+      <button class="cta" id="startBtn">INICIAR TESTE</button>
+
+      <ol class="steps" aria-label="Etapas do teste">
+        <li data-step="ping"><i class="dot"></i>Ping</li>
+        <li data-step="down"><i class="dot"></i>Download</li>
+        <li data-step="up"><i class="dot"></i>Upload</li>
+      </ol>
+    </section>
+
+    <div class="side">
+      <section class="card">
+        <div class="ch">
+          <h2 id="chartTitle">Velocidade em tempo real</h2>
+        </div>
+
+        <canvas id="chart" role="img" aria-label="Gráfico da velocidade ao longo do tempo"></canvas>
+
+        <dl class="stats">
+          <div><dt>Atual</dt><dd id="stCur">--</dd></div>
+          <div><dt>Média</dt><dd id="stAvg">--</dd></div>
+          <div><dt>Máxima</dt><dd id="stMax">--</dd></div>
+        </dl>
+      </section>
+
+      <section class="card">
+        <h2>Resultado do teste</h2>
+
+        <div class="tiles">
+          <div class="tile">
+            <span class="k">↓ Download</span>
+            <b><output id="mDown">--</output> <small class="u">Mbps</small></b>
+          </div>
+
+          <div class="tile">
+            <span class="k">↑ Upload</span>
+            <b><output id="mUp">--</output> <small class="u">Mbps</small></b>
+          </div>
+
+          <div class="tile">
+            <span class="k">◉ Ping</span>
+            <b><output id="mPing">--</output> <small>ms</small></b>
+          </div>
+
+          <div class="tile">
+            <span class="k">≈ Jitter</span>
+            <b><output id="mJit">--</output> <small>ms</small></b>
+          </div>
+        </div>
+
+        <div id="qWrap" hidden>
+          <span class="q" id="quality"></span>
+          <small id="qHint">Estimativa baseada nos valores medidos; não é uma classificação absoluta.</small>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <div class="grid b">
+    <section class="card" id="infoCard" hidden>
+      <h2>Informações da conexão</h2>
+      <dl class="info" id="info"></dl>
+    </section>
+
+    <section class="card">
+      <div class="ch">
+        <h2>Histórico</h2>
+        <button class="ghost" data-clear>Limpar histórico</button>
+      </div>
+
+      <ul id="hist"></ul>
+    </section>
+  </div>
+
+  <p class="foot">
+    Medição real com fetch() e XHR nos endpoints de SPEED_TEST_CONFIG
+    (padrão: Cloudflare). Nada é simulado. O histórico fica só neste navegador
+    e o IP nunca é salvo. Resultados variam com Wi-Fi, servidor e uso da rede.
+  </p>
+</main>
+
+<dialog id="dlg" aria-labelledby="dlgT">
+  <div class="dbody">
+    <div class="ch">
+      <h2 id="dlgT">Configurações</h2>
+      <button class="icon" id="closeDlg" aria-label="Fechar">✕</button>
+    </div>
+
+    <div class="row">
+      <span>Tema</span>
+      <div class="seg" data-themeseg role="group" aria-label="Tema"></div>
+    </div>
+
+    <label class="row">
+      <span>Unidade de velocidade</span>
+      <select id="unitSel">
+        <option>Mbps</option>
+        <option>MB/s</option>
+        <option>Kbps</option>
+      </select>
+    </label>
+
+    <label class="row">
+      <span>Animações</span>
+      <input type="checkbox" id="animChk">
+    </label>
+
+    <div class="row" style="border:0">
+      <span>Histórico local</span>
+      <button class="ghost" data-clear>Limpar histórico</button>
+    </div>
+  </div>
+</dialog>
+
+<script>
+"use strict";
+
+/* ===================== CONFIGURAÇÃO ===================== */
+const APP_NAME = "NetSpeed";
+
+const SPEED_TEST_CONFIG = {
+  downloadUrl: "https://speed.cloudflare.com/__down?bytes=50000000",
+  uploadUrl: "https://speed.cloudflare.com/__up",
+  pingUrl: "https://speed.cloudflare.com/__down?bytes=0",
+  metaUrl: "https://speed.cloudflare.com/meta",
+
+  pingCount: 10,
+  streams: 4,
+  duration: 8000,
+  timeout: 5000
+};
+
+const CFG = SPEED_TEST_CONFIG;
+
+/* ===================== ESTADO ===================== */
+const $ = s => document.querySelector(s);
+const $$ = s => [...document.querySelectorAll(s)];
+
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+const S = {
+  theme: "auto",
+  unit: "Mbps",
+  anim: true,
+
+  cur: 0,
+  target: 0,
+
+  running: false,
+
+  samples: [],
+  max: 0,
+
+  res: {},
+  meta: null,
+
+  /* estado da suavização visual */
+  smoothWindow: [],
+  smoothValue: 0
+};
+
+const mq = window.matchMedia("(prefers-color-scheme: dark)");
+
+const store = {
+  get(k, d) {
+    try {
+      return JSON.parse(localStorage.getItem(k)) ?? d;
+    } catch {
+      return d;
+    }
+  },
+
+  set(k, v) {
+    try {
+      localStorage.setItem(k, JSON.stringify(v));
+    } catch {}
+  }
+};
+
+const reduced = () =>
+  !S.anim || matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+const conv = v =>
+  S.unit === "MB/s" ? v / 8 :
+  S.unit === "Kbps" ? v * 1000 :
+  v;
+
+const fmt = v => conv(v).toFixed(2);
+
+const bust = u =>
+  u + (u.includes("?") ? "&" : "?") + "r=" +
+  Math.random().toString(36).slice(2);
+
+const clean = v => String(v).replace(/[<>&"']/g, "");
+
+const persist = () =>
+  store.set("netspeed.settings", {
+    theme: S.theme,
+    unit: S.unit,
+    anim: S.anim
+  });
+
+/* ===================== INICIALIZAÇÃO ===================== */
+function initializeApp() {
+  document.title = APP_NAME + " — Teste de velocidade";
+  $("#appName").textContent = APP_NAME;
+
+  const saved = store.get("netspeed.settings", {});
+
+  if (["light", "dark", "auto"].includes(saved.theme))
+    S.theme = saved.theme;
+
+  if (["Mbps", "MB/s", "Kbps"].includes(saved.unit))
+    S.unit = saved.unit;
+
+  if (typeof saved.anim === "boolean")
+    S.anim = saved.anim;
+
+  $("#unitSel").value = S.unit;
+  $("#animChk").checked = S.anim;
+
+  applyMotion();
+  initializeTheme();
+  initializeSpeedometer();
+  initializeChart();
+  refreshUnits();
+  loadHistory();
+
+  const dlg = $("#dlg");
+
+  $("#startBtn").onclick = startSpeedTest;
+
+  $("#openSettings").onclick = () => dlg.showModal();
+
+  $("#closeDlg").onclick = () => dlg.close();
+
+  dlg.onclick = e => {
+    if (e.target === dlg) dlg.close();
+  };
+
+  $("#unitSel").onchange = e => {
+    S.unit = e.target.value;
+    persist();
+    refreshUnits();
+  };
+
+  $("#animChk").onchange = e => {
+    S.anim = e.target.checked;
+    persist();
+    applyMotion();
+  };
+
+  document.addEventListener("click", e => {
+    const b = e.target.closest("[data-tc]");
+
+    if (b) {
+      S.theme = b.dataset.tc;
+      persist();
+      applyTheme();
+    }
+
+    if (
+      e.target.closest("[data-clear]") &&
+      confirm("Apagar todo o histórico de testes? Esta ação não pode ser desfeita.")
+    ) {
+      clearHistory();
+    }
+  });
+}
+
+function applyMotion() {
+  document.documentElement.dataset.motion = S.anim ? "on" : "off";
+}
+
+function refreshUnits() {
+  $("#unit").textContent = S.unit;
+
+  renderMetrics();
+  loadHistory();
+
+  /* apenas sincroniza o valor atual, sem criar movimento */
+  updateSpeedometer(S.target, true);
+
+  if (!$("#infoCard").hidden)
+    renderInfo();
+}
+
+/* ===================== TEMA ===================== */
+function initializeTheme() {
+  $$("[data-themeseg]").forEach(el => {
+    el.innerHTML = [
+      ["light", "☀️", "Claro"],
+      ["dark", "🌙", "Escuro"],
+      ["auto", "⚙️", "Automático"]
+    ]
+      .map(
+        ([k, i, l]) =>
+          `<button data-tc="${k}" title="${l}" aria-label="${l}">
+            <span aria-hidden="true">${i}</span>
+            <span class="lb">${l}</span>
+          </button>`
+      )
+      .join("");
+  });
+
+  mq.addEventListener("change", () =>
+    S.theme === "auto" && applyTheme()
+  );
+
+  applyTheme();
+}
+
+function applyTheme() {
+  document.documentElement.dataset.theme =
+    S.theme === "dark" ||
+    (S.theme === "auto" && mq.matches)
+      ? "dark"
+      : "light";
+
+  $$("[data-tc]").forEach(b =>
+    b.setAttribute(
+      "aria-pressed",
+      b.dataset.tc === S.theme
+    )
+  );
+
+  drawChart();
+}
+
+/* ===================== VELOCÍMETRO ===================== */
+const R = 118;
+const CIRC = 2 * Math.PI * R;
+const ARC = CIRC * 0.75;
+
+const MARKS = [
+  0, 5, 10, 25, 50, 100, 250, 500, 1000
+];
+
+/*
+ * O ponteiro utiliza escala logarítmica:
+ * 0 → começo
+ * 1000 → final
+ */
+const frac = v =>
+  Math.min(
+    1,
+    Math.log10(1 + Math.max(0, v)) /
+    Math.log10(1001)
+  );
+
+/*
+ * Suavização do ponteiro.
+ *
+ * Quanto menor o valor, mais "pesado" fica o ponteiro.
+ * 0.09 = movimento bem suave.
+ */
+const NEEDLE_EASE = 0.09;
+
+let raf = 0;
+
+function initializeSpeedometer() {
+  $("#ticks").innerHTML = MARKS.map(m => {
+    const a =
+      (-135 + frac(m) * 270) *
+      Math.PI / 180;
+
+    return `
+      <text
+        x="${150 + 134 * Math.sin(a)}"
+        y="${153 - 134 * Math.cos(a)}"
+        text-anchor="middle"
+      >${m}</text>
+    `;
+  }).join("");
+
+  $("#track").setAttribute(
+    "stroke-dasharray",
+    `${ARC} ${CIRC}`
+  );
+
+  /* começa realmente em zero */
+  updateSpeedometer(0, true);
+}
+
+function updateSpeedometer(v, snap = false) {
+  S.target = Math.max(0, Number(v) || 0);
+
+  /*
+   * "snap" só é usado quando precisamos sincronizar
+   * o indicador instantaneamente, como ao resetar a UI.
+   */
+  if (snap || reduced()) {
+    S.cur = S.target;
+  }
+
+  cancelAnimationFrame(raf);
+  tick();
+}
+
+function tick() {
+  const d = S.target - S.cur;
+
+  /*
+   * Interpolação mais lenta e contínua.
+   * Isso evita que o ponteiro "teleporte" entre amostras.
+   */
+  if (Math.abs(d) < 0.01) {
+    S.cur = S.target;
+  } else {
+    S.cur += d * NEEDLE_EASE;
+  }
+
+  const f = frac(S.cur);
+
+  $("#arc").setAttribute(
+    "stroke-dasharray",
+    `${f * ARC} ${CIRC}`
+  );
+
+  $("#needle").setAttribute(
+    "transform",
+    `rotate(${-135 + f * 270} 150 150)`
+  );
+
+  $("#speedVal").textContent =
+    conv(S.cur).toFixed(2);
+
+  if (Math.abs(S.cur - S.target) > 0.01) {
+    raf = requestAnimationFrame(tick);
+  }
+}
+
+/* ===================== GRÁFICO ===================== */
+let cv, ctx;
+
+const SAMPLE_MS = 200;
+
+function initializeChart() {
+  cv = $("#chart");
+  ctx = cv.getContext("2d");
+
+  new ResizeObserver(drawChart).observe(cv);
+}
+
+function updateChart(v) {
+  S.samples.push(v);
+  drawChart();
+}
+
+function drawChart() {
+  if (!ctx) return;
+
+  const dpr = devicePixelRatio || 1;
+  const w = cv.clientWidth;
+  const h = cv.clientHeight;
+
+  if (!w) return;
+
+  if (
+    cv.width !== Math.round(w * dpr) ||
+    cv.height !== Math.round(h * dpr)
+  ) {
+    cv.width = Math.round(w * dpr);
+    cv.height = Math.round(h * dpr);
+  }
+
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.clearRect(0, 0, w, h);
+
+  const cs = getComputedStyle(document.documentElement);
+
+  const c1 =
+    cs.getPropertyValue("--primary").trim();
+
+  const c2 =
+    cs.getPropertyValue("--accent").trim();
+
+  ctx.strokeStyle =
+    cs.getPropertyValue("--border");
+
+  ctx.lineWidth = 1;
+
+  for (let i = 1; i < 4; i++) {
+    ctx.beginPath();
+    ctx.moveTo(0, h * i / 4);
+    ctx.lineTo(w, h * i / 4);
+    ctx.stroke();
+  }
+
+  const s = S.samples;
+
+  if (s.length < 2)
+    return;
+
+  const N = Math.ceil(
+    CFG.duration / SAMPLE_MS
+  );
+
+  const top =
+    Math.max(...s) * 1.2 || 1;
+
+  const pad = 8;
+
+  const P = s.map((v, i) => [
+    i / Math.max(1, N - 1) * w,
+    h - pad -
+      v / top * (h - 2 * pad)
+  ]);
+
+  ctx.beginPath();
+  ctx.moveTo(...P[0]);
+
+  for (
+    let i = 1;
+    i < P.length - 1;
+    i++
+  ) {
+    ctx.quadraticCurveTo(
+      P[i][0],
+      P[i][1],
+      (P[i][0] + P[i + 1][0]) / 2,
+      (P[i][1] + P[i + 1][1]) / 2
+    );
+  }
+
+  const l = P[P.length - 1];
+
+  ctx.lineTo(l[0], l[1]);
+
+  const g =
+    ctx.createLinearGradient(0, 0, w, 0);
+
+  g.addColorStop(0, c2);
+  g.addColorStop(1, c1);
+
+  ctx.strokeStyle = g;
+  ctx.lineWidth = 2.5;
+  ctx.lineJoin = "round";
+  ctx.stroke();
+
+  ctx.lineTo(l[0], h);
+  ctx.lineTo(P[0][0], h);
+  ctx.closePath();
+
+  const f =
+    ctx.createLinearGradient(0, 0, 0, h);
+
+  f.addColorStop(0, c1 + "55");
+  f.addColorStop(1, c1 + "00");
+
+  ctx.fillStyle = f;
+  ctx.fill();
+}
+
+/* ===================== INTERFACE ===================== */
+const STEPS = [
+  "ping",
+  "down",
+  "up"
+];
+
+function setStep(cur) {
+  const ci = STEPS.indexOf(cur);
+
+  STEPS.forEach((k, i) => {
+    $(`[data-step=${k}]`).className =
+      cur === "end" || i < ci
+        ? "done"
+        : i === ci
+          ? "active"
+          : "";
+  });
+}
+
+const setStatus = t =>
+  $("#status").textContent = t;
+
+function showNotice(m) {
+  const n = $("#notice");
+  n.textContent = m;
+  n.hidden = false;
+}
+
+function renderMetrics() {
+  const r = S.res;
+
+  const set = (id, v) =>
+    $(id).textContent = v;
+
+  set(
+    "#mPing",
+    r.ping != null
+      ? r.ping.toFixed(0)
+      : "--"
+  );
+
+  set(
+    "#mJit",
+    r.jitter != null
+      ? r.jitter.toFixed(1)
+      : "--"
+  );
+
+  set(
+    "#mDown",
+    r.down != null
+      ? fmt(r.down)
+      : "--"
+  );
+
+  set(
+    "#mUp",
+    r.up != null
+      ? fmt(r.up)
+      : "--"
+  );
+
+  $$(".u").forEach(
+    e => e.textContent = S.unit
+  );
+}
+
+function showPhaseStats(cur, avg) {
+  $("#stCur").textContent = fmt(cur);
+  $("#stAvg").textContent = fmt(avg);
+  $("#stMax").textContent = fmt(S.max);
+}
+
+function resetUI() {
+  S.res = {};
+  S.samples = [];
+  S.max = 0;
+
+  /* reseta também a memória da suavização */
+  S.smoothWindow = [];
+  S.smoothValue = 0;
+
+  renderMetrics();
+  drawChart();
+  setStep("");
+
+  /*
+   * Reinicia diretamente em 0.
+   * Não existe mais a animação 0 → 1000 → 0.
+   */
+  updateSpeedometer(0, true);
+
+  [
+    "#stCur",
+    "#stAvg",
+    "#stMax"
+  ].forEach(s =>
+    $(s).textContent = "--"
+  );
+
+  $("#chartTitle").textContent =
+    "Velocidade em tempo real";
+
+  $("#notice").hidden =
+    $("#infoCard").hidden =
+    $("#qWrap").hidden = true;
+
+  document.body.classList.remove(
+    "done-glow"
+  );
+}
+
+function setButton(txt, busy) {
+  const b = $("#startBtn");
+
+  b.textContent = txt;
+  b.disabled = busy;
+
+  document.body.classList.toggle(
+    "testing",
+    busy
+  );
+}
+
+/* ===================== SUAVIZAÇÃO ===================== */
+
+/*
+ * Mediana elimina valores isolados muito altos/baixos.
+ *
+ * Exemplo:
+ * 300, 305, 309, 1200, 302
+ *
+ * O 1200 é tratado como pico isolado.
+ */
+function median(values) {
+  if (!values.length)
+    return 0;
+
+  const a = [...values].sort(
+    (x, y) => x - y
+  );
+
+  const mid = Math.floor(a.length / 2);
+
+  return a.length % 2
+    ? a[mid]
+    : (a[mid - 1] + a[mid]) / 2;
+}
+
+/*
+ * Combina:
+ * 1. janela de mediana
+ * 2. suavização exponencial
+ *
+ * Resultado:
+ * a medição visual não oscila brutalmente.
+ */
+function stabilizeThroughput(raw) {
+  const WINDOW = 5;
+  const EMA = 0.28;
+
+  S.smoothWindow.push(
+    Math.max(0, raw)
+  );
+
+  if (
+    S.smoothWindow.length >
+    WINDOW
+  ) {
+    S.smoothWindow.shift();
+  }
+
+  const med = median(
+    S.smoothWindow
+  );
+
+  if (!S.smoothValue) {
+    S.smoothValue = med;
+  } else {
+    S.smoothValue =
+      S.smoothValue * (1 - EMA) +
+      med * EMA;
+  }
+
+  return S.smoothValue;
+}
+
+/* ===================== TESTE ===================== */
+async function startSpeedTest() {
+  if (S.running)
+    return;
+
+  if (!window.fetch || !window.performance) {
+    return showNotice(
+      "Seu navegador não tem suporte às APIs necessárias (fetch / performance). Atualize ou troque de navegador."
+    );
+  }
+
+  if (navigator.onLine === false) {
+    return showNotice(
+      "Você parece estar sem conexão com a internet. Conecte-se e tente novamente."
+    );
+  }
+
+  S.running = true;
+
+  resetUI();
+  setButton("TESTANDO...", true);
+
+  try {
+    setStatus("Preparando teste...");
+
+    const metaP = loadMeta();
+
+    /*
+     * Antes havia:
+     *
+     * updateSpeedometer(1000);
+     * await sleep(...);
+     * updateSpeedometer(0);
+     *
+     * Isso causava o pico artificial.
+     *
+     * Agora o ponteiro permanece em 0.
+     */
+    await prepare();
+
+    setStep("ping");
+    setStatus("Medindo ping...");
+    await measurePing();
+
+    setStep("down");
+    setStatus("Testando download...");
+    await measureDownload();
+
+    setStep("up");
+    setStatus("Testando upload...");
+    await measureUpload();
+
+    setStep("end");
+    setStatus("Finalizando...");
+
+    await metaP;
+    await sleep(
+      reduced() ? 50 : 450
+    );
+
+    showResults();
+    saveResult();
+
+    setStatus("Teste concluído");
+    setButton(
+      "TESTAR NOVAMENTE",
+      false
+    );
+
+  } catch (e) {
+    showNotice(
+      e.message ||
+      "Não foi possível concluir a medição. Verifique sua conexão e tente novamente."
+    );
+
+    setStep("");
+    updateSpeedometer(0);
+
+    setStatus("Teste interrompido");
+
+    setButton(
+      "TENTAR NOVAMENTE",
+      false
+    );
+
+  } finally {
+    S.running = false;
+  }
+}
+
+async function prepare() {
+  /*
+   * Pequeno tempo de preparação visual.
+   * O ponteiro permanece em 0 durante toda essa fase.
+   */
+  updateSpeedometer(0, true);
+
+  await sleep(
+    reduced() ? 60 : 350
+  );
+}
+
+function fail(step, e) {
+  const m =
+    e && e.name === "AbortError"
+      ? `Tempo esgotado na etapa de ${step}. Verifique sua conexão e tente novamente.`
+      : e instanceof TypeError
+        ? `Falha na etapa de ${step}: o endpoint está indisponível, foi bloqueado por CORS ou você está sem conexão. Confira SPEED_TEST_CONFIG e a rede.`
+        : "Não foi possível concluir a medição. Verifique sua conexão e tente novamente.";
+
+  return new Error(m);
+}
+
+const fetchT = (url, ms) => {
+  const c = new AbortController();
+
+  const t = setTimeout(
+    () => c.abort(),
+    ms
+  );
+
+  return fetch(
+    bust(url),
+    {
+      cache: "no-store",
+      signal: c.signal
+    }
+  ).finally(() =>
+    clearTimeout(t)
+  );
+};
+
+async function loadMeta() {
+  if (!CFG.metaUrl)
+    return;
+
+  try {
+    S.meta =
+      await (
+        await fetchT(
+          CFG.metaUrl,
+          CFG.timeout
+        )
+      ).json();
+
+  } catch {
+    S.meta = null;
+  }
+}
+
+/* ===================== PING ===================== */
+async function measurePing() {
+  const t = [];
+
+  try {
+    for (
+      let i = 0;
+      i < CFG.pingCount;
+      i++
+    ) {
+      const a = performance.now();
+
+      const r = await fetchT(
+        CFG.pingUrl,
+        CFG.timeout
+      );
+
+      await r.arrayBuffer();
+
+      const d =
+        performance.now() - a;
+
+      if (i > 0)
+        t.push(d);
+
+      if (t.length) {
+        S.res.ping =
+          [...t].sort(
+            (x, y) => x - y
+          )[Math.floor(t.length / 2)];
+
+        S.res.jitter =
+          t.length > 1
+            ? t.slice(1).reduce(
+                (s, x, j) =>
+                  s +
+                  Math.abs(
+                    x - t[j]
+                  ),
+                0
+              ) /
+              (t.length - 1)
+            : 0;
+
+        renderMetrics();
+      }
+
+      await sleep(80);
+    }
+
+  } catch (e) {
+    throw fail("ping", e);
+  }
+}
+
+/* ===================== DOWNLOAD ===================== */
+async function dlWorker(st) {
+  while (
+    !st.ac.signal.aborted
+  ) {
+    try {
+      const r = await fetch(
+        bust(CFG.downloadUrl),
+        {
+          cache: "no-store",
+          signal: st.ac.signal
+        }
+      );
+
+      if (!r.ok)
+        throw new Error(
+          "HTTP " + r.status
+        );
+
+      if (
+        r.body &&
+        r.body.getReader
+      ) {
+        const rd =
+          r.body.getReader();
+
+        for (;;) {
+          const {
+            done,
+            value
+          } = await rd.read();
+
+          if (done)
+            break;
+
+          st.bytes +=
+            value.length;
+        }
+
+      } else {
+        st.bytes +=
+          (
+            await r.arrayBuffer()
+          ).byteLength;
+      }
+
+    } catch (e) {
+      if (!st.ac.signal.aborted)
+        st.fail = e;
+
+      return;
+    }
+  }
+}
+
+/* ===================== UPLOAD ===================== */
+let PAYLOAD;
+
+async function ulWorker(st) {
+  if (!PAYLOAD) {
+    const c =
+      crypto.getRandomValues(
+        new Uint8Array(65536)
+      );
+
+    const a =
+      new Uint8Array(
+        65536 * 64
+      );
+
+    for (
+      let i = 0;
+      i < 64;
+      i++
+    ) {
+      a.set(
+        c,
+        i * 65536
+      );
+    }
+
+    PAYLOAD =
+      new Blob([a]);
+  }
+
+  while (
+    !st.ac.signal.aborted &&
+    !st.fail
+  ) {
+    await new Promise(res => {
+      const x =
+        new XMLHttpRequest();
+
+      let last = 0;
+
+      st.xhrs.push(x);
+
+      x.open(
+        "POST",
+        bust(CFG.uploadUrl)
+      );
+
+      x.timeout =
+        CFG.timeout * 3;
+
+      x.upload.onprogress = e => {
+        st.bytes +=
+          e.loaded - last;
+
+        last = e.loaded;
+      };
+
+      x.onerror = () => {
+        if (!st.ac.signal.aborted) {
+          st.fail =
+            new TypeError(
+              "upload"
+            );
+        }
+
+        res();
+      };
+
+      x.onload = () => {
+        if (x.status >= 400) {
+          st.fail =
+            new Error(
+              "HTTP " + x.status
+            );
+        }
+
+        res();
+      };
+
+      x.onabort =
+        x.ontimeout = () =>
+          res();
+
+      x.send(PAYLOAD);
+    });
+  }
+}
+
+/* ===================== THROUGHPUT ===================== */
+async function measureThroughput(
+  key,
+  worker
+) {
+  const st = {
+    bytes: 0,
+    fail: null,
+    ac: new AbortController(),
+    xhrs: []
+  };
+
+  S.samples = [];
+  S.max = 0;
+
+  /* reinicia suavização de cada etapa */
+  S.smoothWindow = [];
+  S.smoothValue = 0;
+
+  drawChart();
+
+  const t0 = performance.now();
+
+  let lt = t0;
+  let lb = 0;
+
+  let cur = 0;
+
+  let wb = 0;
+  let wt = t0;
+
+  let warm = false;
+
+  let sum = 0;
+  let n = 0;
+
+  for (
+    let i = 0;
+    i < CFG.streams;
+    i++
+  ) {
+    worker(st);
+  }
+
+  await new Promise(res => {
+    const id =
+      setInterval(() => {
+        const now =
+          performance.now();
+
+        const b =
+          st.bytes;
+
+        const elapsed =
+          now - lt;
+
+        /*
+         * Velocidade instantânea real.
+         */
+        const inst =
+          elapsed > 0
+            ? (b - lb) *
+              8 /
+              (1e3 * elapsed)
+            : 0;
+
+        lt = now;
+        lb = b;
+
+        /*
+         * Primeiro remove picos isolados,
+         * depois suaviza.
+         */
+        const stable =
+          stabilizeThroughput(
+            inst
+          );
+
+        /*
+         * Cur representa o valor visual
+         * estável utilizado no medidor.
+         *
+         * Isso evita que um pacote isolado,
+         * mudança de buffer ou rajada de dados
+         * cause um pico enorme na interface.
+         */
+        cur = stable;
+
+        /*
+         * Ignora o primeiro segundo
+         * para as estatísticas de fase.
+         */
+        if (
+          !warm &&
+          now - t0 > 1000
+        ) {
+          warm = true;
+          wb = b;
+          wt = now;
+        }
+
+        S.max = Math.max(
+          S.max,
+          cur
+        );
+
+        if (warm) {
+          sum += cur;
+          n++;
+        }
+
+        /*
+         * A interface recebe somente
+         * o valor estabilizado.
+         */
+        S.res[key] = cur;
+
+        renderMetrics();
+
+        updateSpeedometer(cur);
+
+        updateChart(cur);
+
+        showPhaseStats(
+          cur,
+          n ? sum / n : cur
+        );
+
+        if (
+          now - t0 >=
+            CFG.duration ||
+          (st.fail && !b)
+        ) {
+          clearInterval(id);
+          res();
+        }
+
+      }, SAMPLE_MS);
+  });
+
+  st.ac.abort();
+
+  st.xhrs.forEach(
+    x => x.abort()
+  );
+
+  if (!st.bytes) {
+    throw (
+      st.fail ||
+      new TypeError("sem dados")
+    );
+  }
+
+  /*
+   * Resultado final continua sendo
+   * calculado diretamente pelos bytes reais.
+   * A suavização serve apenas para a interface.
+   */
+  const now =
+    performance.now();
+
+  return warm
+    ? (st.bytes - wb) *
+      8 /
+      (1e3 * (now - wt))
+    : st.bytes *
+      8 /
+      (1e3 * (now - t0));
+}
+
+async function measureDownload() {
+  $("#chartTitle").textContent =
+    "Download em tempo real (" +
+    S.unit +
+    ")";
+
+  try {
+    S.res.down =
+      await measureThroughput(
+        "down",
+        dlWorker
+      );
+
+  } catch (e) {
+    throw fail(
+      "download",
+      e
+    );
+  }
+
+  renderMetrics();
+}
+
+async function measureUpload() {
+  $("#chartTitle").textContent =
+    "Upload em tempo real (" +
+    S.unit +
+    ")";
+
+  try {
+    S.res.up =
+      await measureThroughput(
+        "up",
+        ulWorker
+      );
+
+  } catch (e) {
+    throw fail(
+      "upload",
+      e
+    );
+  }
+
+  renderMetrics();
+}
+
+/* ===================== RESULTADOS ===================== */
+function countTo(
+  sel,
+  to,
+  dec
+) {
+  const el = $(sel);
+
+  if (reduced()) {
+    el.textContent =
+      to.toFixed(dec);
+
+    return;
+  }
+
+  const t0 =
+    performance.now();
+
+  const D = 1100;
+
+  (function f(n) {
+    const p =
+      Math.min(
+        1,
+        (n - t0) / D
+      );
+
+    el.textContent =
+      (
+        to *
+        (1 -
+          Math.pow(
+            1 - p,
+            3
+          ))
+      ).toFixed(dec);
+
+    if (p < 1)
+      requestAnimationFrame(f);
+
+  })(t0);
+}
+
+function showResults() {
+  const r = S.res;
+
+  /*
+   * O valor final também chega suavemente
+   * ao resultado, sem "teleporte".
+   */
+  updateSpeedometer(r.down);
+
+  countTo(
+    "#mDown",
+    conv(r.down),
+    2
+  );
+
+  countTo(
+    "#mUp",
+    conv(r.up),
+    2
+  );
+
+  countTo(
+    "#mPing",
+    r.ping,
+    0
+  );
+
+  countTo(
+    "#mJit",
+    r.jitter,
+    1
+  );
+
+  $$(".tile").forEach(t => {
+    t.classList.remove("glow");
+    void t.offsetWidth;
+    t.classList.add("glow");
+  });
+
+  document.body.classList.add(
+    "done-glow"
+  );
+
+  const l =
+    r.down >= 100 &&
+    r.ping < 30
+      ? "excelente"
+      : r.down >= 25 &&
+        r.ping < 80
+        ? "boa"
+        : r.down >= 5 &&
+          r.ping < 150
+          ? "regular"
+          : "baixa";
+
+  const q = $("#quality");
+
+  q.dataset.l = l;
+  q.textContent =
+    l.toUpperCase();
+
+  $("#qWrap").hidden = false;
+
+  renderInfo();
+
+  $("#infoCard").hidden = false;
+}
+
+function renderInfo() {
+  const c =
+    navigator.connection || {};
+
+  const m =
+    S.meta || {};
+
+  const r =
+    S.res;
+
+  const colo =
+    m.colo &&
+    typeof m.colo === "object"
+      ? (
+          m.colo.city ||
+          m.colo.iata
+        )
+      : m.colo;
+
+  let host = "";
+
+  try {
+    host =
+      new URL(
+        CFG.downloadUrl
+      ).hostname;
+  } catch {}
+
+  const rows = [
+    ["IP público", m.clientIp],
+    [
+      "Servidor",
+      [m.city, colo]
+        .filter(Boolean)
+        .join(" · ") ||
+        host
+    ],
+    [
+      "Tipo de conexão",
+      c.type
+    ],
+    [
+      "Tecnologia estimada",
+      c.effectiveType &&
+        c.effectiveType.toUpperCase()
+    ],
+    [
+      "RTT (navegador)",
+      c.rtt != null &&
+        c.rtt + " ms"
+    ],
+    [
+      "Downlink (navegador)",
+      c.downlink != null &&
+        c.downlink + " Mbps"
+    ],
+    [
+      "Economia de dados",
+      c.saveData != null &&
+        (
+          c.saveData
+            ? "Ativada"
+            : "Desativada"
+        )
+    ],
+    [
+      "Latência",
+      r.ping.toFixed(0) +
+        " ms"
+    ],
+    [
+      "Jitter",
+      r.jitter.toFixed(1) +
+        " ms"
+    ],
+    [
+      "Download",
+      fmt(r.down) +
+        " " +
+        S.unit
+    ],
+    [
+      "Upload",
+      fmt(r.up) +
+        " " +
+        S.unit
+    ]
+  ];
+
+  $("#info").innerHTML =
+    rows
+      .map(
+        ([k, v]) =>
+          `<div>
+            <dt>${k}</dt>
+            <dd>${v ? clean(v) : "Não disponível"}</dd>
+          </div>`
+      )
+      .join("");
+}
+
+/* ===================== HISTÓRICO ===================== */
+const HK =
+  "netspeed.history";
+
+function saveResult() {
+  const h =
+    store.get(HK, []);
+
+  h.unshift({
+    t: Date.now(),
+    d: S.res.down,
+    u: S.res.up,
+    p: S.res.ping
+  });
+
+  store.set(
+    HK,
+    h.slice(0, 10)
+  );
+
+  loadHistory();
+}
+
+function loadHistory() {
+  const h =
+    store.get(HK, []);
+
+  $("#hist").innerHTML =
+    Array.isArray(h) &&
+    h.length
+      ? h
+          .map(x => {
+            const d =
+              new Date(x.t);
+
+            return `
+              <li>
+                <time datetime="${d.toISOString()}">
+                  ${d.toLocaleDateString("pt-BR")}
+                  —
+                  ${d.toLocaleTimeString(
+                    "pt-BR",
+                    {
+                      hour: "2-digit",
+                      minute: "2-digit"
+                    }
+                  )}
+                </time>
+
+                <span>
+                  ↓ ${conv(x.d).toFixed(0)}
+                  ${S.unit}
+                </span>
+
+                <span>
+                  ↑ ${conv(x.u).toFixed(0)}
+                  ${S.unit}
+                </span>
+
+                <span>
+                  ◉ ${Number(x.p).toFixed(0)}
+                  ms
+                </span>
+              </li>
+            `;
+          })
+          .join("")
+
+      : '<li class="empty">Nenhum teste salvo ainda. Faça o primeiro teste!</li>';
+}
+
+function clearHistory() {
+  store.set(HK, []);
+  loadHistory();
+}
 
 initializeApp();
 </script>
