@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>CloudBox</title>
+<style>
+*{box-sizing:border-box;margin:0}
+:root,[data-theme=light]{--bg:#f6f7fc;--surface:#fff;--text:#12172b;--muted:#667090;--primary:#5b5cf0;--accent:#22b8cf;--border:rgba(18,23,43,.09);--shadow:0 6px 24px rgba(40,50,110,.08);--hover:rgba(91,92,240,.09)}
+[data-theme=dark]{--bg:#0a0c16;--surface:#141829;--text:#eceffc;--muted:#8d97ba;--primary:#8587ff;--accent:#3dd6e8;--border:rgba(150,165,255,.14);--shadow:0 6px 28px rgba(0,0,0,.45);--hover:rgba(133,135,255,.14);color-scheme:dark}
+[hidden]{display:none!important}
+body{font:15px/1.5 ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
+body,header,nav,.card,.item,.stat,dialog,input,select,.menu,.drop{transition:background-color .35s,color .35s,border-color .35s}
+:focus-visible{outline:3px solid var(--primary);outline-offset:2px}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer}
+.btn,.ib{border:1px solid var(--border);background:var(--surface);border-radius:12px;padding:8px 14px;transition:transform .2s,background .2s,border-color .2s}
+.btn:hover,.ib:hover{border-color:var(--primary);background:var(--hover);transform:translateY(-1px)}
+.ib{width:36px;height:36px;padding:0;border-radius:50%;display:grid;place-items:center}
+.btn.p{background:linear-gradient(135deg,var(--primary),var(--accent));color:#fff;border:0;font-weight:700}
+.btn.p:hover{background:linear-gradient(135deg,var(--primary),var(--accent));filter:brightness(1.08)}
+.muted{color:var(--muted)}
+/* login */
+.login{min-height:100vh;display:grid;place-items:center;padding:20px}
+.login .card{width:min(420px,100%);text-align:center;padding:36px 28px;display:grid;gap:14px}
+.login input{padding:12px 14px;border-radius:12px;border:1px solid var(--border);background:var(--bg);width:100%}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:22px;box-shadow:var(--shadow);animation:rise .5s both}
+.logo{display:inline-flex;align-items:center;gap:9px;font-weight:800;font-size:1.2rem;letter-spacing:-.02em}
+.logo i{width:32px;height:32px;border-radius:10px;display:grid;place-items:center;background:linear-gradient(135deg,var(--primary),var(--accent));color:#fff;font-style:normal}
+/* header */
+header{position:sticky;top:0;z-index:20;display:flex;flex-wrap:wrap;align-items:center;gap:10px 16px;padding:10px 16px;background:var(--surface);border-bottom:1px solid var(--border)}
+.search{flex:1 1 280px;order:2;max-width:560px;margin:0 auto}
+.search input{width:100%;padding:10px 16px;border-radius:999px;border:1px solid var(--border);background:var(--bg)}
+.tools{margin-left:auto;display:flex;align-items:center;gap:8px;position:relative}
+.seg{display:flex;padding:3px;border:1px solid var(--border);border-radius:999px;background:var(--bg)}
+.seg button{border:0;background:none;border-radius:999px;padding:4px 9px;font-size:.85rem}
+.seg [aria-pressed=true]{background:var(--surface);box-shadow:0 1px 5px rgba(0,0,0,.18)}
+.av{width:36px;height:36px;border-radius:50%;border:0;background:linear-gradient(135deg,var(--primary),var(--accent));color:#fff;font-weight:700;background-size:cover;background-position:center}
+.menu{position:absolute;right:0;top:46px;width:min(270px,calc(100vw - 24px));background:var(--surface);border:1px solid var(--border);border-radius:16px;box-shadow:var(--shadow);padding:8px;animation:pop .2s}
+.menu .who{padding:10px;border-bottom:1px solid var(--border);overflow-wrap:anywhere}
+.menu button{display:block;width:100%;text-align:left;border:0;background:none;padding:10px;border-radius:10px}
+.menu button:hover{background:var(--hover)}
+/* layout */
+.shell{display:grid;grid-template-columns:230px minmax(0,1fr)}
+nav{position:sticky;top:61px;align-self:start;height:calc(100vh - 61px);padding:16px 12px;display:flex;flex-direction:column;gap:4px;border-right:1px solid var(--border)}
+nav .nb{display:flex;align-items:center;gap:12px;border:0;background:none;padding:11px 14px;border-radius:12px;text-align:left;color:var(--muted)}
+nav .nb:hover{background:var(--hover)}
+nav .nb[aria-current=page]{background:var(--hover);color:var(--primary);font-weight:700}
+.meter{margin-top:auto;padding:14px;border-radius:14px;border:1px solid var(--border);font-size:.85rem}
+.bar{height:8px;border-radius:9px;background:var(--hover);margin:8px 0;overflow:hidden}
+.bar i{display:block;height:100%;width:0;border-radius:9px;background:linear-gradient(90deg,var(--primary),var(--accent));transition:width .6s}
+main{padding:clamp(16px,3vw,32px);min-width:0;animation:rise .5s both}
+h1{font-size:clamp(1.6rem,4vw,2.2rem);letter-spacing:-.03em}
+h2{font-size:1.1rem}
+.cta{margin:18px 0;padding:16px 28px;border-radius:999px;font-size:1.02rem;letter-spacing:.04em}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px}
+.stat{padding:16px;border-radius:18px;background:var(--surface);border:1px solid var(--border);box-shadow:var(--shadow)}
+.stat b{display:block;font-size:1.5rem;letter-spacing:-.02em}
+.drop{margin:20px 0;padding:34px 16px;text-align:center;border:2px dashed var(--border);border-radius:22px;background:var(--surface)}
+.drop span{font-size:2.2rem;display:block}
+body.drag .drop{border-color:var(--primary);background:var(--hover);transform:scale(1.01)}
+body.drag main{outline:3px dashed var(--primary);outline-offset:-10px}
+.q{display:grid;gap:10px;margin:12px 0 24px}
+.qi{padding:12px 14px;border-radius:14px;background:var(--surface);border:1px solid var(--border);animation:rise .3s both}
+.qi .top{display:flex;justify-content:space-between;gap:8px}.qi .top b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.qi[data-s=Concluído] .bar i{background:#16a870}.qi[data-s=Erro] .bar i{background:#dc3c3c}
+.tb{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin:24px 0 14px}
+.tb h2{margin-right:auto}
+select{padding:8px 10px;border-radius:12px;border:1px solid var(--border);background:var(--surface);max-width:100%}
+/* galeria */
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,190px),1fr));gap:14px}
+.item{position:relative;background:var(--surface);border:1px solid var(--border);border-radius:18px;overflow:hidden;box-shadow:var(--shadow);animation:pop .35s both;transition:transform .25s,box-shadow .25s}
+.item:hover{transform:translateY(-3px)}
+.thumb{display:block;width:100%;aspect-ratio:1;border:0;padding:0;background:var(--hover)}
+.thumb img{width:100%;height:100%;object-fit:cover;display:block}
+.meta{padding:10px 12px;min-width:0;display:flex;flex-direction:column}
+.meta b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.meta small{color:var(--muted)}
+.acts{position:absolute;top:8px;right:8px;display:flex;gap:6px;opacity:0;transition:opacity .2s}
+.item:hover .acts,.item:focus-within .acts{opacity:1}
+@media(hover:none){.acts{opacity:1}}
+.acts .ib{background:var(--surface);box-shadow:0 2px 8px rgba(0,0,0,.2);width:32px;height:32px}
+.fav{color:#e0245e}
+.grid.list{grid-template-columns:1fr;gap:8px}
+.list .item{display:flex;align-items:center;border-radius:14px}
+.list .thumb{width:56px;height:56px;aspect-ratio:auto;flex:none;border-radius:12px;margin:6px;overflow:hidden}
+.list .meta{flex:1}.list .meta small{display:none}
+.list .sz,.list .dt{display:block!important;color:var(--muted);font-size:.85rem;padding:0 12px;white-space:nowrap}
+.sz,.dt{display:none}
+.list .acts{position:static;opacity:1;padding-right:10px}
+@media(max-width:700px){.list .sz,.list .dt{display:none!important}}
+.sk{aspect-ratio:1;border-radius:18px;background:linear-gradient(90deg,var(--hover),var(--border),var(--hover));background-size:200% 100%;animation:sh 1.3s infinite}
+.empty{grid-column:1/-1;text-align:center;padding:48px 12px;color:var(--muted)}
+/* dialogs */
+dialog{margin:auto;border:1px solid var(--border);border-radius:22px;background:var(--surface);color:var(--text);padding:0;box-shadow:var(--shadow);max-width:100%}
+dialog[open]{animation:pop .25s}
+dialog::backdrop{background:rgba(5,8,20,.7);backdrop-filter:blur(4px)}
+#acct{width:min(420px,calc(100% - 24px))}.db{padding:22px;display:grid;gap:12px}
+#viewer{width:min(1100px,100%);height:min(92vh,100%);overflow:hidden}
+#viewer[open]{display:flex;flex-direction:column}
+.vh,.vf{display:flex;align-items:center;gap:10px;padding:12px 16px;flex-wrap:wrap}
+.vh b{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.stage{position:relative;flex:1;min-height:0;overflow:auto;display:grid;place-items:center;background:var(--bg)}
+.stage img{max-width:100%;max-height:100%;object-fit:contain;cursor:zoom-in}
+.nv{position:absolute;top:50%;transform:translateY(-50%);z-index:2}
+.vf{justify-content:space-between}
+.fab{position:fixed;right:16px;bottom:84px;width:56px;height:56px;border-radius:50%;font-size:1.8rem;display:none}
+.toasts{position:fixed;left:50%;bottom:90px;transform:translateX(-50%);display:grid;gap:8px;z-index:100;width:min(420px,calc(100% - 24px))}
+.toast{padding:12px 16px;border-radius:14px;background:var(--text);color:var(--bg);box-shadow:var(--shadow);animation:rise .3s both}
+.toast.err{background:#dc3c3c;color:#fff}.toast.warn{background:#d98a0b;color:#fff}
+@media(max-width:800px){
+ .shell{display:block}
+ nav{position:fixed;inset:auto 0 0 0;top:auto;height:auto;flex-direction:row;justify-content:space-around;padding:6px;z-index:20;background:var(--surface);border-top:1px solid var(--border);border-right:0}
+ nav .nb{flex-direction:column;gap:0;padding:6px 8px;font-size:.72rem;text-align:center}.meter{display:none}
+ main{padding-bottom:150px}.fab{display:block}.cta{width:100%}
+ .search{order:3;flex-basis:100%;max-width:none}.seg button{padding:4px 7px}
+ #viewer{height:100dvh;border-radius:0;border:0}
+}
+@keyframes rise{from{opacity:0;transform:translateY(12px)}}
+@keyframes pop{from{opacity:0;transform:scale(.94)}}
+@keyframes sh{to{background-position:-200% 0}}
+@media(prefers-reduced-motion:reduce){*,*::before{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<!-- ============ LOGIN (aparece quando não há sessão) ============ -->
+<div id="login" class="login" hidden><div class="card">
+  <span class="logo" style="justify-self:center"><i>☁</i><span class="appName">CloudBox</span></span>
+  <h1 style="font-size:1.5rem">Faça login para acessar suas imagens.</h1>
+  <p class="muted">Enviaremos um link de acesso para o seu e-mail (Supabase Auth).</p>
+  <input id="email" type="email" placeholder="seu@email.com" autocomplete="email" aria-label="E-mail">
+  <button class="btn p" id="signInBtn">Entrar</button>
+  <p id="cfgWarn" class="muted" role="status" style="font-size:.85rem"></p>
+</div></div>
+
+<!-- ============ APLICATIVO ============ -->
+<div id="app" hidden>
+<header>
+  <span class="logo"><i>☁</i><span class="appName">CloudBox</span></span>
+  <div class="search"><input id="search" type="search" placeholder="Pesquisar imagens..." aria-label="Pesquisar imagens"></div>
+  <div class="tools">
+    <div class="seg" data-themeseg role="group" aria-label="Tema"></div>
+    <button class="av" id="avBtn" aria-label="Menu do usuário" aria-haspopup="true" aria-expanded="false"></button>
+    <div class="menu" id="menu" hidden><div class="who"><b id="mName"></b><br><small class="muted" id="mEmail"></small></div>
+      <button data-acct>Minha conta</button><button data-acct>Configurações</button><button id="outBtn">Sair</button></div>
+  </div>
+</header>
+<div class="shell">
+  <nav aria-label="Navegação">
+    <button class="nb" data-v="home">🏠 <span>Início</span></button>
+    <button class="nb" data-v="lib">🖼️ <span>Minhas imagens</span></button>
+    <button class="nb" data-v="fav">⭐ <span>Favoritos</span></button>
+    <button class="nb" data-v="trash">🗑️ <span>Lixeira</span></button>
+    <div class="meter"><b>Armazenamento</b><div class="bar"><i id="mBar"></i></div><span id="mTxt" class="muted">--</span></div>
+  </nav>
+  <main>
+    <section id="hero">
+      <h1 id="hello">Olá</h1><p class="muted">Suas imagens</p>
+      <button class="btn p cta" id="add">+ ADICIONAR IMAGENS</button>
+      <div class="stats">
+        <div class="stat">🖼️ Imagens<b id="sImg">--</b></div><div class="stat">☁️ Armazenamento<b id="sSize">--</b></div><div class="stat">🕐 Último upload<b id="sLast">--</b></div>
+      </div>
+      <div class="drop" id="drop"><span>☁️</span><p>Arraste suas imagens aqui</p><p class="muted">ou</p><br><button class="btn" id="pick">Selecionar imagens</button></div>
+    </section>
+    <section id="qSec" hidden><h2>Uploads</h2><div class="q" id="queue" aria-live="polite"></div></section>
+    <div class="tb"><h2 id="title"></h2>
+      <select id="sort" aria-label="Ordenar"><option value="new">Mais recentes</option><option value="old">Mais antigos</option><option value="az">Nome A-Z</option><option value="za">Nome Z-A</option><option value="big">Maior tamanho</option><option value="small">Menor tamanho</option></select>
+      <div class="seg" id="modeSeg" role="group" aria-label="Visualização"><button data-m="grid" title="Grade" aria-label="Grade">▦</button><button data-m="list" title="Lista" aria-label="Lista">☷</button></div>
+    </div>
+    <div class="grid" id="gallery"></div>
+  </main>
+</div>
+<button class="btn p fab" id="fab" aria-label="Adicionar imagens">+</button>
+</div>
+
+<dialog id="viewer" aria-label="Visualizador de imagem">
+  <div class="vh"><b id="vName"></b><button class="ib" id="vClose" aria-label="Fechar">✕</button></div>
+  <div class="stage" id="stage"><button class="ib nv" id="vPrev" style="left:10px" aria-label="Anterior">‹</button><img id="vImg" alt=""><button class="ib nv" id="vNext" style="right:10px" aria-label="Próxima">›</button></div>
+  <div class="vf"><small class="muted" id="vInfo"></small>
+    <span><button class="ib" id="zOut" aria-label="Diminuir zoom">−</button> <button class="ib" id="zIn" aria-label="Aumentar zoom">+</button> <button class="btn" id="vDl">Baixar</button> <button class="btn" id="vDel">Excluir</button></span></div>
+</dialog>
+<dialog id="acct" aria-label="Minha conta"><div class="db">
+  <div class="av" id="acAv" style="width:72px;height:72px;font-size:1.8rem;display:grid;place-items:center;justify-self:center"></div>
+  <div style="text-align:center"><b id="acName"></b><br><span class="muted" id="acEmail"></span><br><small class="muted" id="acSince"></small></div>
+  <div style="display:flex;justify-content:space-between;align-items:center"><span>Tema</span><div class="seg" data-themeseg role="group" aria-label="Tema"></div></div>
+  <button class="btn" id="acClose">Fechar</button>
+</div></dialog>
+<div class="toasts" id="toasts" role="status" aria-live="polite"></div>
+<input type="file" id="file" multiple accept="image/*" hidden>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+"use strict";
+/* ===================================================================
+   ★ CONFIGURAÇÃO — preencha com os dados do SEU projeto Supabase.
+   Use somente a chave pública "anon". NUNCA a service_role.
+   =================================================================== */
+const APP_NAME = "CloudBox"; // nome provisório
+const SUPABASE_URL = "COLE_AQUI_A_URL_DO_PROJETO";   // ex.: https://xxxx.supabase.co
+const SUPABASE_ANON_KEY = "COLE_AQUI_A_ANON_KEY";    // chave pública (anon)
+const BUCKET = "images", TABLE = "images";
+const STORAGE_CONFIG = {
+  maxFileSizeMB: 50, maxFilesPerUpload: 20, quotaGB: 5, // quotaGB é só exibição na barra
+  allowedTypes: ["image/jpeg", "image/png", "image/webp", "image/gif", "image/avif", "image/bmp"]
+};
+
+/* ===================== ESTADO E UTILITÁRIOS ===================== */
+const $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAll(s)];
+const S = { user: null, images: [], view: "home", q: "", sort: "new", loading: true, queue: [], theme: "auto", mode: "grid", cur: null, zoom: 1, list: [] };
+const mq = matchMedia("(prefers-color-scheme: dark)");
+const store = { get(k, d) { try { return JSON.parse(localStorage.getItem(k)) ?? d } catch { return d } }, set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)) } catch {} } };
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const fmtSize = b => b < 1024 ? b + " B" : b < 1048576 ? (b / 1024).toLocaleString("pt-BR", { maximumFractionDigits: 0 }) + " KB" : b < 1073741824 ? (b / 1048576).toLocaleString("pt-BR", { maximumFractionDigits: 1 }) + " MB" : (b / 1073741824).toLocaleString("pt-BR", { maximumFractionDigits: 2 }) + " GB";
+const fmtDate = d => new Date(d).toLocaleDateString("pt-BR");
+const savePrefs = () => store.set("cloudbox.prefs", { theme: S.theme, mode: S.mode });
+let sb = null;
+
+/* ===================== INICIALIZAÇÃO ===================== */
+function initializeApp() {
+  document.title = APP_NAME; $$(".appName").forEach(e => e.textContent = APP_NAME);
+  const p = store.get("cloudbox.prefs", {});
+  if (["light", "dark", "auto"].includes(p.theme)) S.theme = p.theme;
+  if (["grid", "list"].includes(p.mode)) S.mode = p.mode;
+  initializeTheme(); bindEvents(); setView("home");
+  if (!initializeSupabase()) return showLogin("Supabase ainda não configurado: preencha SUPABASE_URL e SUPABASE_ANON_KEY no início do script.");
+  checkAuthentication();
+}
+function initializeSupabase() {
+  if (!/^https?:\/\//.test(SUPABASE_URL) || SUPABASE_ANON_KEY.startsWith("COLE_") || !window.supabase) return false;
+  sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY); return true;
+}
+function showLogin(msg) { $("#login").hidden = false; $("#app").hidden = true; $("#cfgWarn").textContent = msg || "" }
+
+/* ===================== ★ AUTENTICAÇÃO (conecte aqui) ===================== */
+async function checkAuthentication() {
+  const { data: { session } } = await sb.auth.getSession();            // ★ (1) sessão atual
+  setUser(session ? session.user : null);
+  sb.auth.onAuthStateChange((_ev, s) => setTimeout(() => setUser(s ? s.user : null), 0)); // ★ (2) login/logout/refresh
+}
+async function signIn() { // ★ Substitua pelo seu fluxo (OAuth, senha via Supabase Auth etc.). Aqui: link mágico.
+  const email = $("#email").value.trim();
+  if (!sb) return toast("Configure SUPABASE_URL e SUPABASE_ANON_KEY primeiro.", "warn");
+  if (!email) return toast("Digite seu e-mail.", "warn");
+  const { error } = await sb.auth.signInWithOtp({ email, options: { emailRedirectTo: location.href.split("#")[0] } });
+  error ? toast("Não foi possível enviar o link de acesso.", "err") : toast("✓ Link de acesso enviado para o seu e-mail.");
+}
+async function setUser(u) {
+  const same = u && S.user && u.id === S.user.id; S.user = u;
+  if (!u) { S.images = []; return showLogin() }
+  if (same) return;
+  $("#login").hidden = true; $("#app").hidden = false; loadUserProfile(); await loadImages();
+}
+function loadUserProfile() {
+  const u = S.user, m = u.user_metadata || {}, name = m.full_name || m.name || (u.email || "").split("@")[0] || "Usuário";
+  $("#hello").textContent = "Olá, " + name; $("#mName").textContent = $("#acName").textContent = name;
+  $("#mEmail").textContent = $("#acEmail").textContent = u.email || "";
+  $("#acSince").textContent = "Conta criada em: " + fmtDate(u.created_at);
+  [$("#avBtn"), $("#acAv")].forEach(e => { e.textContent = m.avatar_url ? "" : name[0].toUpperCase(); e.style.backgroundImage = m.avatar_url ? `url("${esc(m.avatar_url)}")` : "" });
+}
+
+/* ===================== TEMA ===================== */
+function initializeTheme() {
+  $$("[data-themeseg]").forEach(el => el.innerHTML = [["light", "☀️", "Claro"], ["dark", "🌙", "Escuro"], ["auto", "⚙️", "Automático"]].map(([k, i, l]) => `<button data-tc="${k}" title="${l}" aria-label="${l}">${i}</button>`).join(""));
+  mq.addEventListener("change", () => S.theme === "auto" && applyTheme()); applyTheme();
+}
+function applyTheme() {
+  document.documentElement.dataset.theme = S.theme === "dark" || (S.theme === "auto" && mq.matches) ? "dark" : "light";
+  $$("[data-tc]").forEach(b => b.setAttribute("aria-pressed", b.dataset.tc === S.theme));
+}
+
+/* ===================== DADOS (Database + Storage) ===================== */
+async function loadImages() {
+  S.loading = true; render();
+  try {
+    const { data, error } = await sb.from(TABLE).select("*").eq("user_id", S.user.id).order("created_at", { ascending: false });
+    if (error) throw error;
+    S.images = data; await signUrls(data);
+  } catch (e) { toast("❌ Não foi possível carregar as imagens.", "err") }
+  S.loading = false; render();
+}
+async function signUrls(rows) { // bucket privado → URLs assinadas temporárias (1 h)
+  if (!rows.length) return;
+  const { data } = await sb.storage.from(BUCKET).createSignedUrls(rows.map(r => r.storage_path), 3600);
+  const m = new Map((data || []).map(d => [d.path, d.signedUrl])); rows.forEach(r => r.url = m.get(r.storage_path) || "");
+}
+function validateFile(f) {
+  if (!STORAGE_CONFIG.allowedTypes.includes(f.type)) return `“${f.name}”: formato não suportado (use JPG, PNG, WEBP, GIF, AVIF ou BMP).`;
+  if (f.size > STORAGE_CONFIG.maxFileSizeMB * 1048576) return `“${f.name}” é muito grande (máx. ${STORAGE_CONFIG.maxFileSizeMB} MB).`;
+  if (!f.size) return `“${f.name}” está vazio.`;
+  return null;
+}
+async function uploadImages(files) {
+  if (!sb || !S.user) return toast("Faça login para enviar imagens.", "warn");
+  files = [...files];
+  if (files.length > STORAGE_CONFIG.maxFilesPerUpload) { toast(`⚠️ Máximo de ${STORAGE_CONFIG.maxFilesPerUpload} arquivos por envio; os demais foram ignorados.`, "warn"); files = files.slice(0, STORAGE_CONFIG.maxFilesPerUpload) }
+  const todo = [];
+  for (const f of files) {
+    const err = validateFile(f), q = { name: f.name, size: f.size, pct: 0, state: err ? "Erro" : "Preparando...", msg: err || "", file: err ? null : f };
+    if (err) toast("⚠️ " + err, "warn"); else todo.push(q);
+    S.queue.unshift(q);
+  }
+  renderQueue();
+  const run = async () => { while (todo.length) await uploadOne(todo.shift()) }; // 3 envios simultâneos; a UI não trava
+  await Promise.all([run(), run(), run()]);
+  updateStorageUsage();
+}
+async function uploadOne(q) {
+  try {
+    const { data: { session } } = await sb.auth.getSession();
+    const path = `${S.user.id}/${crypto.randomUUID()}-${q.name.replace(/[^\w.\-]+/g, "_")}`; // USER_ID/arquivo
+    q.state = "Enviando..."; renderQueue();
+    await xhrUpload(path, q.file, session.access_token, p => { q.pct = p; renderQueue() });
+    q.state = "Processando..."; q.pct = 100; renderQueue();
+    const { data, error } = await sb.from(TABLE).insert({ user_id: S.user.id, file_name: q.name, storage_path: path, file_size: q.file.size, mime_type: q.file.type }).select().single();
+    if (error) { await sb.storage.from(BUCKET).remove([path]); throw error } // desfaz se o metadado falhar
+    await signUrls([data]); S.images.unshift(data); q.state = "Concluído"; q.file = null; render();
+    toast("✓ Imagem enviada com sucesso");
+  } catch (e) { q.state = "Erro"; q.msg = "Falha no envio."; q.file = null; renderQueue(); toast(`❌ Falha no upload de “${q.name}”.`, "err") }
+}
+function xhrUpload(path, file, token, onp) { // XHR para ter progresso real de envio (a API do supabase-js não expõe)
+  return new Promise((res, rej) => {
+    const x = new XMLHttpRequest();
+    x.open("POST", `${SUPABASE_URL}/storage/v1/object/${BUCKET}/${path.split("/").map(encodeURIComponent).join("/")}`);
+    x.setRequestHeader("Authorization", "Bearer " + token); x.setRequestHeader("apikey", SUPABASE_ANON_KEY);
+    x.setRequestHeader("Content-Type", file.type); x.setRequestHeader("x-upsert", "false");
+    x.upload.onprogress = e => e.lengthComputable && onp(Math.round(e.loaded / e.total * 100));
+    x.onload = () => x.status < 300 ? res() : rej(new Error(x.responseText || x.status));
+    x.onerror = () => rej(new Error("rede")); x.timeout = 600000; x.ontimeout = x.onerror; x.send(file);
+  });
+}
+async function downloadImage(img) { // baixa o ORIGINAL com o nome original (Content-Disposition)
+  const { data, error } = await sb.storage.from(BUCKET).createSignedUrl(img.storage_path, 60, { download: img.file_name });
+  if (error) return toast("❌ Não foi possível baixar a imagem.", "err");
+  const a = document.createElement("a"); a.href = data.signedUrl; a.download = img.file_name; document.body.append(a); a.click(); a.remove();
+  toast("✓ Imagem baixada");
+}
+async function deleteImage(img, forever) { // 1ª exclusão → lixeira; na lixeira → definitiva (Storage + Database)
+  if (!confirm(forever ? "Excluir definitivamente? Esta ação não pode ser desfeita." : "Tem certeza que deseja excluir esta imagem? Ela irá para a lixeira.")) return;
+  try {
+    if (forever) {
+      const { error: e1 } = await sb.storage.from(BUCKET).remove([img.storage_path]); if (e1) throw e1;
+      const { error: e2 } = await sb.from(TABLE).delete().eq("id", img.id); if (e2) throw e2;
+      S.images = S.images.filter(i => i.id !== img.id);
+    } else {
+      const t = new Date().toISOString(), { error } = await sb.from(TABLE).update({ deleted_at: t }).eq("id", img.id); if (error) throw error; img.deleted_at = t;
+    }
+    if ($("#viewer").open) $("#viewer").close(); render(); toast("✓ Imagem excluída");
+  } catch (e) { toast("❌ Não foi possível excluir a imagem.", "err") }
+}
+async function restoreImage(img) {
+  const { error } = await sb.from(TABLE).update({ deleted_at: null }).eq("id", img.id);
+  if (error) return toast("❌ Não foi possível restaurar.", "err"); img.deleted_at = null; render(); toast("✓ Imagem restaurada");
+}
+async function toggleFavorite(img) { // otimista, com reversão em caso de erro
+  img.is_favorite = !img.is_favorite; render();
+  const { error } = await sb.from(TABLE).update({ is_favorite: img.is_favorite }).eq("id", img.id);
+  if (error) { img.is_favorite = !img.is_favorite; render(); toast("❌ Não foi possível atualizar o favorito.", "err") } else toast("✓ Favorito atualizado");
+}
+
+/* ===================== LISTA: PESQUISA, ORDENAÇÃO, VISÃO ===================== */
+const SORTS = { new: (a, b) => b.created_at.localeCompare(a.created_at), old: (a, b) => a.created_at.localeCompare(b.created_at), az: (a, b) => a.file_name.localeCompare(b.file_name, "pt-BR"), za: (a, b) => b.file_name.localeCompare(a.file_name, "pt-BR"), big: (a, b) => b.file_size - a.file_size, small: (a, b) => a.file_size - b.file_size };
+function searchImages() { const q = S.q.trim().toLowerCase(); return S.images.filter(i => !q || i.file_name.toLowerCase().includes(q)) }
+function sortImages(l) { return l.sort(SORTS[S.sort]) }
+function visibleList() {
+  let l = searchImages().filter(i => S.view === "trash" ? i.deleted_at : !i.deleted_at && (S.view !== "fav" || i.is_favorite));
+  l = sortImages(l); return S.view === "home" && !S.q ? l.slice(0, 12) : l;
+}
+const TITLES = { home: "Recentes", lib: "Minhas imagens", fav: "Favoritos", trash: "Lixeira" };
+function setView(v) {
+  S.view = v; $("#hero").hidden = v !== "home"; $("#title").textContent = TITLES[v];
+  $$("nav .nb").forEach(b => b.dataset.v === v ? b.setAttribute("aria-current", "page") : b.removeAttribute("aria-current"));
+  render();
+}
+
+/* ===================== RENDERIZAÇÃO ===================== */
+function render() {
+  const g = $("#gallery"); g.classList.toggle("list", S.mode === "list");
+  $$("#modeSeg button").forEach(b => b.setAttribute("aria-pressed", b.dataset.m === S.mode));
+  if (S.loading) { g.innerHTML = '<div class="sk"></div>'.repeat(8); return }
+  const l = S.list = visibleList();
+  g.innerHTML = l.length ? l.map(i => {
+    const t = S.view === "trash";
+    return `<article class="item" data-id="${i.id}"><button class="thumb" data-a="open" aria-label="Abrir ${esc(i.file_name)}"><img loading="lazy" src="${esc(i.url || "")}" alt="${esc(i.file_name)}"></button>
+    <div class="meta"><b title="${esc(i.file_name)}">${esc(i.file_name)}</b><small>${fmtDate(i.created_at)} · ${fmtSize(i.file_size)}</small></div><span class="sz">${fmtSize(i.file_size)}</span><span class="dt">${fmtDate(t ? i.deleted_at : i.created_at)}</span>
+    <div class="acts">${t ? `<button class="ib" data-a="restore" title="Restaurar" aria-label="Restaurar">↩</button><button class="ib" data-a="forever" title="Excluir definitivamente" aria-label="Excluir definitivamente">✕</button>` :
+      `<button class="ib fav" data-a="fav" aria-label="Favoritar" aria-pressed="${!!i.is_favorite}">${i.is_favorite ? "♥" : "♡"}</button><button class="ib" data-a="dl" title="Baixar" aria-label="Baixar">⬇</button><button class="ib" data-a="del" title="Excluir" aria-label="Excluir">🗑</button>`}</div></article>`;
+  }).join("") : `<div class="empty"><div style="font-size:2.4rem">${S.view === "trash" ? "🗑️" : "🖼️"}</div><p>${S.q ? `Nada encontrado para “${esc(S.q)}”.` : S.view === "trash" ? "A lixeira está vazia." : S.view === "fav" ? "Toque em ♡ para favoritar imagens." : "Nenhuma imagem ainda. Arraste arquivos ou use “Adicionar imagens”."}</p></div>`;
+  updateStorageUsage();
+}
+function renderQueue() {
+  $("#qSec").hidden = !S.queue.length;
+  $("#queue").innerHTML = S.queue.slice(0, 20).map(q => `<div class="qi" data-s="${q.state}"><div class="top"><b>🖼️ ${esc(q.name)}</b><span>${q.state === "Concluído" ? "✓" : q.state === "Erro" ? "✕" : q.pct + "%"}</span></div>
+    <div class="bar"><i style="width:${q.state === "Erro" ? 100 : q.pct}%"></i></div><small class="muted">${esc(q.state === "Erro" ? q.msg : q.state)} · ${fmtSize(q.size)}</small></div>`).join("");
+}
+function updateStorageUsage() {
+  const all = S.images, bytes = all.reduce((s, i) => s + i.file_size, 0), quota = STORAGE_CONFIG.quotaGB * 1073741824;
+  $("#mBar").style.width = Math.min(100, bytes / quota * 100) + "%"; $("#mTxt").textContent = `${fmtSize(bytes)} de ${STORAGE_CONFIG.quotaGB} GB usados`;
+  const act = all.filter(i => !i.deleted_at), last = all.length ? all.reduce((a, b) => a.created_at > b.created_at ? a : b).created_at : null;
+  $("#sImg").textContent = act.length; $("#sSize").textContent = fmtSize(bytes);
+  const d = last && Math.floor((new Date().setHours(0, 0, 0, 0) - new Date(last).setHours(0, 0, 0, 0)) / 864e5);
+  $("#sLast").textContent = last ? (d === 0 ? "Hoje" : d === 1 ? "Ontem" : fmtDate(last)) : "--";
+}
+
+/* ===================== VISUALIZADOR ===================== */
+function openImageViewer(id) {
+  const i = S.list.findIndex(x => x.id === id); if (i < 0) return; S.cur = i; showViewer(); if (!$("#viewer").open) $("#viewer").showModal();
+}
+function showViewer() {
+  const n = S.list.length, img = S.list[S.cur]; if (!img) return closeImageViewer();
+  S.zoom = 1; setZoom(); $("#vImg").src = img.url; $("#vImg").alt = img.file_name; $("#vName").textContent = img.file_name;
+  $("#vInfo").textContent = `${fmtSize(img.file_size)} · ${img.mime_type || ""} · ${fmtDate(img.created_at)} · ${S.cur + 1}/${n}`;
+  $("#vPrev").hidden = $("#vNext").hidden = n < 2; $("#vDel").textContent = S.view === "trash" ? "Excluir definitivamente" : "Excluir";
+}
+function setZoom(z) {
+  S.zoom = Math.min(4, Math.max(1, z ?? S.zoom)); const im = $("#vImg");
+  im.style.cssText = S.zoom === 1 ? "" : `width:${S.zoom * 100}%;max-width:none;max-height:none;cursor:zoom-out`;
+}
+function stepViewer(d) { const n = S.list.length; S.cur = (S.cur + d + n) % n; showViewer() }
+function closeImageViewer() { $("#viewer").close() }
+
+/* ===================== TOAST ===================== */
+function showToast(msg, type) { const t = document.createElement("div"); t.className = "toast " + (type || ""); t.textContent = msg; $("#toasts").append(t); setTimeout(() => t.remove(), 4000) }
+const toast = showToast;
+
+/* ===================== EVENTOS ===================== */
+function bindEvents() {
+  const file = $("#file"), pickFiles = () => file.click();
+  ["#add", "#pick", "#fab"].forEach(s => $(s).onclick = pickFiles);
+  file.onchange = () => { uploadImages(file.files); file.value = "" };
+  $("#signInBtn").onclick = signIn; $("#email").onkeydown = e => e.key === "Enter" && signIn();
+  $("#outBtn").onclick = async () => { $("#menu").hidden = true; if (sb) await sb.auth.signOut() }; // ★ encerra a sessão
+  $("#search").oninput = e => { S.q = e.target.value; render() };
+  $("#sort").onchange = e => { S.sort = e.target.value; render() };
+  $("#drop").onclick = e => { if (e.target === $("#drop")) pickFiles() };
+  $("#modeSeg").onclick = e => { const b = e.target.closest("[data-m]"); if (b) { S.mode = b.dataset.m; savePrefs(); render() } };
+  $("nav").onclick = e => { const b = e.target.closest("[data-v]"); if (b) setView(b.dataset.v) };
+  // menu do usuário e conta
+  const menu = $("#menu"), acct = $("#acct");
+  $("#avBtn").onclick = e => { e.stopPropagation(); menu.hidden = !menu.hidden; $("#avBtn").setAttribute("aria-expanded", !menu.hidden) };
+  document.addEventListener("click", e => { if (!e.target.closest("#menu")) menu.hidden = true });
+  $$("[data-acct]").forEach(b => b.onclick = () => { menu.hidden = true; acct.showModal() });
+  $("#acClose").onclick = () => acct.close();
+  [acct, $("#viewer")].forEach(d => d.onclick = e => { if (e.target === d) d.close() }); // clique fora fecha
+  document.addEventListener("click", e => { const b = e.target.closest("[data-tc]"); if (b) { S.theme = b.dataset.tc; savePrefs(); applyTheme() } });
+  // galeria (delegação)
+  $("#gallery").onclick = e => {
+    const a = e.target.closest("[data-a]"), it = e.target.closest(".item"); if (!a || !it) return;
+    const img = S.images.find(i => i.id === it.dataset.id), k = a.dataset.a;
+    ({ open: () => openImageViewer(img.id), fav: () => toggleFavorite(img), dl: () => downloadImage(img), del: () => deleteImage(img, false), restore: () => restoreImage(img), forever: () => deleteImage(img, true) })[k]();
+  };
+  // visualizador
+  $("#vClose").onclick = closeImageViewer; $("#vPrev").onclick = () => stepViewer(-1); $("#vNext").onclick = () => stepViewer(1);
+  $("#zIn").onclick = () => setZoom(S.zoom + .5); $("#zOut").onclick = () => setZoom(S.zoom - .5);
+  $("#vImg").onclick = () => setZoom(S.zoom === 1 ? 2 : 1);
+  $("#vDl").onclick = () => downloadImage(S.list[S.cur]); $("#vDel").onclick = () => deleteImage(S.list[S.cur], S.view === "trash");
+  document.addEventListener("keydown", e => { if ($("#viewer").open && S.list.length > 1) { if (e.key === "ArrowLeft") stepViewer(-1); if (e.key === "ArrowRight") stepViewer(1) } });
+  // arrastar e soltar (em qualquer lugar da página)
+  let dc = 0;
+  addEventListener("dragenter", e => { if (e.dataTransfer?.types.includes("Files")) { dc++; document.body.classList.add("drag") } });
+  addEventListener("dragleave", () => { if (--dc <= 0) { dc = 0; document.body.classList.remove("drag") } });
+  addEventListener("dragover", e => e.preventDefault());
+  addEventListener("drop", e => { e.preventDefault(); dc = 0; document.body.classList.remove("drag"); if (e.dataTransfer.files.length) uploadImages(e.dataTransfer.files) });
+}
+
+initializeApp();
+
+/* ===================================================================
+   ★ BACKEND SUPABASE — rode no SQL Editor (nesta ordem)
+   -------------------------------------------------------------------
+   -- 1) Tabela de metadados
+   create table public.images (
+     id uuid primary key default gen_random_uuid(),
+     user_id uuid not null default auth.uid() references auth.users(id) on delete cascade,
+     file_name text not null,
+     storage_path text not null unique,
+     file_size bigint not null check (file_size >= 0),
+     mime_type text,
+     is_favorite boolean not null default false,
+     deleted_at timestamptz,
+     created_at timestamptz not null default now()
+   );
+   create index images_user_created_idx on public.images (user_id, created_at desc);
+
+   -- 2) RLS: cada usuário só enxerga/altera as próprias linhas (nada de "using (true)")
+   alter table public.images enable row level security;
+   create policy "images_select_own" on public.images for select to authenticated
+     using (auth.uid() = user_id);
+   create policy "images_insert_own" on public.images for insert to authenticated
+     with check (auth.uid() = user_id and storage_path like auth.uid()::text || '/%');
+   create policy "images_update_own" on public.images for update to authenticated
+     using (auth.uid() = user_id) with check (auth.uid() = user_id);
+   create policy "images_delete_own" on public.images for delete to authenticated
+     using (auth.uid() = user_id);
+
+   -- 3) Bucket PRIVADO (public = false) com limite e tipos permitidos
+   insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+   values ('images', 'images', false, 52428800,
+     array['image/jpeg','image/png','image/webp','image/gif','image/avif','image/bmp']);
+
+   -- 4) Storage policies: só a pasta USER_ID/ do próprio usuário
+   create policy "storage_select_own" on storage.objects for select to authenticated
+     using (bucket_id = 'images' and (storage.foldername(name))[1] = auth.uid()::text);
+   create policy "storage_insert_own" on storage.objects for insert to authenticated
+     with check (bucket_id = 'images' and (storage.foldername(name))[1] = auth.uid()::text);
+   create policy "storage_delete_own" on storage.objects for delete to authenticated
+     using (bucket_id = 'images' and (storage.foldername(name))[1] = auth.uid()::text);
+
+   -- A proteção REAL está nestas políticas: o JavaScript do navegador pode ser alterado
+   -- por qualquer pessoa. Nunca use a service_role_key no frontend; use só a anon key.
+   -- Auth → URL Configuration: adicione a URL onde o site roda em "Redirect URLs".
+   =================================================================== */
+</script>
+</body>
+</html>
