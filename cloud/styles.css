@@ -73,9 +73,9 @@ button{cursor:pointer;background: none;justify-content: center;align-items: cent
 .card #cfgWarn {align-self: end;display: flex;justify-content: center;margin-top: 10px;width: 100%;}
 .card #cfgWarn t{width: 70%;}
 .card #signInBtn {font-weight: 500;align-self: end;width: 100%;/* height: 40px; */margin-top: 30px;}
-.card .googleBtn{margin-top: 10px !important;display: flex;background: var(--surface);color: var(--text);border: 1px solid var(--border3);}
+.card .googleBtn{margin-top: 10px !important;display: flex;width: 100%;background: var(--surface);color: var(--text);border: 1px solid var(--border3);}
 .card .googleBtn:hover{background: var(--black); color: var(--white); border-color: var(--black)}
-.card .facebookBtn{margin-top: 10px !important;display: flex;background: var(--surface);color: var(--text);border: 1px solid var(--border3);}
+.card .facebookBtn{margin-top: 10px !important;display: flex;width: 100%;background: var(--surface);color: var(--text);border: 1px solid var(--border3);}
 .card .facebookBtn:hover{background: var(--black); color: var(--white); border-color: var(--black)}
 .card .googleBtn i{margin-right: 7px}
 .card .facebookBtn i{margin-right: 7px}
