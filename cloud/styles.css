@@ -40,6 +40,7 @@
 
 [hidden]{display:none!important}
 
+*{-webkit-tap-highlight-color: transparent;}
 body {
  font:15px/1.5 ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
  font-family: 'Poppins';
@@ -62,6 +63,7 @@ button{cursor:pointer;background: none;justify-content: center;align-items: cent
 /* login */
 .appName {font-family: 'Poppins'; font-weight: 300;}
 .card h1 {margin-top: 10px;font-family: 'Outfit';font-weight: 400;}
+.card h1 x{display:none}
 .card .muted {
  font-family: 'Outfit';
  font-weight: 500;
@@ -69,10 +71,10 @@ button{cursor:pointer;background: none;justify-content: center;align-items: cent
 }
 .card #cfgWarn {align-self: end;display: flex;justify-content: center;margin-top: 10px;width: 100%;}
 .card #cfgWarn t{width: 70%;}
-.card #signInBtn {font-weight: 500; align-self: end;width: 100%; height: 40px; margin-top: 30px;}
-.card .googleBtn{margin-top: 10px !important;background: var(--surface);color: var(--text);border: 1px solid var(--border3);}
+.card #signInBtn {font-weight: 500;align-self: end;width: 100%;/* height: 40px; */margin-top: 30px;}
+.card .googleBtn{margin-top: 10px !important;display: flex;background: var(--surface);color: var(--text);border: 1px solid var(--border3);}
 .card .googleBtn:hover{background: var(--black); color: var(--white); border-color: var(--black)}
-.card .facebookBtn{margin-top: 10px !important;background: var(--surface);color: var(--text);border: 1px solid var(--border3);}
+.card .facebookBtn{margin-top: 10px !important;display: flex;background: var(--surface);color: var(--text);border: 1px solid var(--border3);}
 .card .facebookBtn:hover{background: var(--black); color: var(--white); border-color: var(--black)}
 .card .googleBtn i{margin-right: 7px}
 .card .facebookBtn i{margin-right: 7px}
@@ -90,8 +92,8 @@ button{cursor:pointer;background: none;justify-content: center;align-items: cent
 }
 .inputTitle button{font-size: 0.9rem;color: var(--primary);display: flex;margin-left: auto;margin-right: 15px;height: 20px;}
 .inputs{margin-top: 30px;}
-.login{min-height:100vh;display:grid;place-items:center;padding:20px;}
-.login .card{width:min(420px,100%);/* height: 500px; */text-align:center;padding: 20px;display: initial;justify-items: center;}
+.login{min-height:100vh;display:grid;place-items:center;justify-content: center;padding:20px;}
+.login .card{width: min(420px, 100%);/* height: 500px; */text-align:center;padding: 20px;display: initial;justify-items: center;}
 .login input{padding:12px 14px;border-radius: 250px;border:1px solid var(--border);background:var(--bg);width:100%;max-height: 40px;font-size: 1rem;}
 .card{background:var(--surface);border:1px solid var(--border);border-radius:22px;box-shadow:var(--shadow);animation: rise 0.7s;}
 .logo{display:inline-flex;justify-content: center;align-items:center;gap:9px;font-weight:800;font-size:1.2rem;letter-spacing:-.02em}
@@ -202,3 +204,16 @@ dialog::backdrop{background:rgba(5,8,20,.7);backdrop-filter:blur(4px)}
 @keyframes pop{from{opacity:0;transform:scale(.94)}}
 @keyframes sh{to{background-position:-200% 0}}
 @media(prefers-reduced-motion:reduce){*,*::before{animation:none!important;transition:none!important}}
+@media (max-width: 357px) {
+ .login{padding:0}
+ .card h1 z{display:none}
+ .card h1 x{display:initial}
+}
+@media (max-width: 335px) {
+ .login{padding:0}
+}
+@media (max-width: 300px) {
+ .googleBtn z{display:none}
+ .facebookBtn z{display:none}
+}
+@media (max-width: 260px) {.card h1 x{display:none}}
