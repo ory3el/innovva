@@ -16,16 +16,26 @@
 <body>
  
 <!-- login -->
-<div id="login" class="login" hidden><div class="card">
-  <span class="logo" style="justify-self:center"><i>
-   <span class="logo"><img src="/cloud/files/images/favicon.png" alt="logo">
+<div id="login" class="login" hidden>
+ <div class="card">
+  <span class="logo" style="justify-self:center;"><i>
+   <span class="logo"><img src="/cloud/files/images/favicon.png" alt="logo"></span>
   </i><span class="appName">Innovva aCloud</span></span>
-  <h1 style="font-size:1.5rem">Faça login para acessar suas imagens.</h1>
-  <p class="muted">Enviaremos um link de acesso para o seu e-mail (Supabase Auth).</p>
-  <input id="email" type="email" placeholder="seu@email.com" autocomplete="email" aria-label="E-mail">
-  <button class="btn p" id="signInBtn">Entrar</button>
-  <p id="cfgWarn" class="muted" role="status" style="font-size:.85rem"></p>
-</div></div>
+  <h1 style="font-size:1.5rem">Faça login para acessar suas imagens</h1>
+  <p class="muted">Entre na sua conta Innovva para prosseguir.</p>
+  <div class="inputs">
+   <p class="inputTitle">E-mail</p>
+   <input id="email" type="email" placeholder="seu@email.com" autocomplete="email" aria-label="E-mail">
+   <p class="inputTitle">Senha</p>
+   <input id="password" type="password" placeholder="Senha" autocomplete="password" aria-label="Senha">
+   </div>
+  <button class="btn p loginBtn" id="signInBtn">Entrar</button>
+  <p id="cfgWarn" class="muted" role="status" style="font-size:.85rem">
+    <t>Ao continuar, você confirma estar de acordo com os Termos de Uso e a Política de Privacidade da Innovva.</t>
+  </p>
+  <p class="noAccTxt">Não tem uma conta? <button class="createNewAcc">Crie uma conta</button></p>
+</div>
+</div>
 
 <!-- app -->
 <div id="app" hidden>
