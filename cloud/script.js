@@ -221,8 +221,8 @@ function stepViewer(d) { const n = S.list.length; S.cur = (S.cur + d + n) % n; s
 function closeImageViewer() { $("#viewer").close() }
 
 /* ===================== TOAST ===================== */
-function showToast(msg, type) { const t = document.createElement("div"); t.className = "toast " + (type || ""); t.textContent = msg; $("#toasts").append(t); setTimeout(() => t.remove(), 4000) }
-const toast = showToast;
+/*function showToast(msg, type) { const t = document.createElement("div"); t.className = "toast " + (type || ""); t.textContent = msg; $("#toasts").append(t); setTimeout(() => t.remove(), 4000) }
+const toast = showToast;*/
 
 /* ===================== EVENTOS ===================== */
 function bindEvents() {
