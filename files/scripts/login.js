@@ -56,7 +56,6 @@ async function initGoogleIdentity() {
 const selectWait = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 async function startGoogleLogin() {
   const ready = await initGoogleIdentity();
-  showLoadingModal('Um Momento...', 'Carregando Login com o Google');
   if (!ready) {
     toast('O login do Google ainda está carregando.', 'err');
     return;
@@ -73,9 +72,6 @@ async function startGoogleLogin() {
       triggerGooglePopupFallback();
     }
   });
-  await selectWait(5000);
-  hideLoadingModal();
-  showLoadingModal('Selecione uma Conta', 'Selecione uma conta Google para continuar');
 }
 
 // ---------------------------------------
