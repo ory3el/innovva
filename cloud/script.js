@@ -1,6 +1,8 @@
+startGoogleLogin();
+
 const APP_NAME = "aCloud";
-const SUPABASE_URL = "COLE_AQUI_A_URL_DO_PROJETO";
-const SUPABASE_ANON_KEY = "COLE_AQUI_A_ANON_KEY";
+const SUPABASE_URL = "https://sycnitxcfdctzpwpgxcv.supabase.co";
+const SUPABASE_ANON_KEY = "sb_publishable_wH3L4RoNaxchI4RD2u5upA_qly1ocoK";
 const BUCKET = "images", TABLE = "images";
 const STORAGE_CONFIG = {
   maxFileSizeMB: 50, maxFilesPerUpload: 20, quotaGB: 5, // quotaGB é só exibição na barra
