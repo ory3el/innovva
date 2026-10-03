@@ -31,7 +31,7 @@ function initializeSupabase() {
   if (!/^https?:\/\//.test(SUPABASE_URL) || SUPABASE_ANON_KEY.startsWith("COLE_") || !window.supabase) return false;
   sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY); return true;
 }
-function showLogin(msg) { $("#login").hidden = false; $("#app").hidden = true; $("#cfgWarn").textContent = msg || "" }
+function showLogin(msg) { $("#login").hidden = false; $("#app").hidden = true; /*$("#cfgWarn").textContent = msg || ""*/ }
 
 /* ===================== ★ AUTENTICAÇÃO (conecte aqui) ===================== */
 async function checkAuthentication() {
