@@ -107,8 +107,7 @@
   </div>
 </div>
 
-<!-- app -->
-<div id="app" hidden>
+<div id="app">
   <header>
     <span class="logo">
       <i><img src="/cloud/files/images/favicon.png" alt="logo"></i>
@@ -116,37 +115,71 @@
     </span>
     <div class="search"><input id="search" type="search" placeholder="Pesquisar imagens..." aria-label="Pesquisar imagens"></div>
     <div class="tools">
-      <div class="seg" data-themeseg role="group" aria-label="Tema"></div>
-      <button class="av" id="avBtn" aria-label="Menu do usuário" aria-haspopup="true" aria-expanded="false"></button>
-      <div class="menu" id="menu" hidden>
-        <div class="who"><b id="mName"></b><br><small class="muted" id="mEmail"></small></div>
-        <button data-acct>Minha conta</button><button data-acct>Configurações</button><button id="outBtn">Sair</button>
+      <div class="seg" data-themeseg="" role="group" aria-label="Tema"><button data-tc="light" title="Claro" aria-label="Claro" aria-pressed="true">
+    <i class="fa-solid fa-sun"></i>
+</button><button data-tc="dark" title="Escuro" aria-label="Escuro" aria-pressed="false">
+    <i class="fa-solid fa-moon"></i>
+</button><button data-tc="auto" title="Automático" aria-label="Automático" aria-pressed="false">
+    <i class="fa-solid fa-gear"></i>
+</button></div>
+      <button class="av" id="avBtn" aria-label="Menu do usuário" aria-haspopup="true" aria-expanded="false" style="background-image: url(&quot;https://lh3.googleusercontent.com/a/ACg8ocKPb6WPn6lJMGk3M_WlcGl9ApHQFMlpH730bXEfvCXyErfS1g=s96-c&quot;);"></button>
+      <div class="menu" id="menu" hidden="">
+        <div class="who"><b id="mName">Api Innovva</b><br><small class="muted" id="mEmail">api.innovva@gmail.com</small></div>
+        <button data-acct="">Minha conta</button><button data-acct="">Configurações</button><button id="outBtn">Sair</button>
       </div>
     </div>
   </header>
   <div class="shell">
     <nav aria-label="Navegação">
-      <button class="nb" data-v="home">🏠 <span>Início</span></button>
-      <button class="nb" data-v="lib">🖼️ <span>Minhas imagens</span></button>
-      <button class="nb" data-v="fav">⭐ <span>Favoritos</span></button>
-      <button class="nb" data-v="trash">🗑️ <span>Lixeira</span></button>
-      <div class="meter"><b>Armazenamento</b><div class="bar"><i id="mBar"></i></div><span id="mTxt" class="muted">--</span></div>
+      <button class="nb" data-v="home" aria-current="page">🏠 <span>Início</span></button>
+      <button class="nb" data-v="lib">
+    <i class="fa-regular fa-image"></i>
+    <span>Minhas imagens</span>
+</button>
+      <button class="nb" data-v="fav">
+    <i class="fa-regular fa-heart"></i>
+    <span>Favoritos</span>
+</button>
+      <button class="nb" data-v="trash">
+    <i class="fa-regular fa-trash-can"></i>
+    <span>Lixeira</span>
+</button>
+      <div class="meter"><b>
+    <i class="fa-regular fa-folder"></i>
+    Armazenamento
+</b><div class="bar"><i id="mBar" style="width: 0%;"></i></div><span id="mTxt" class="muted">0 B de 5 GB usados</span></div>
     </nav>
     <main>
       <section id="hero">
-        <h1 id="hello">Olá</h1><p class="muted">Suas imagens</p>
-        <button class="btn p cta" id="add">+ ADICIONAR IMAGENS</button>
+        <h1 id="hello">Olá,</h1><p class="muted">Suas imagens</p>
+        <button class="btn p cta" id="add">
+    <i class="fa-solid fa-plus"></i>
+    Adicionar Imagens</button>
         <div class="stats">
-          <div class="stat">🖼️ Imagens<b id="sImg">--</b></div><div class="stat">☁️ Armazenamento<b id="sSize">--</b></div><div class="stat">🕐 Último upload<b id="sLast">--</b></div>
+          <div class="stat">
+    <i class="fa-regular fa-image"></i>
+    Imagens<b id="sImg">0</b>
+</div><div class="stat">
+    <i class="fa-regular fa-folder"></i>
+    Armazenamento<b id="sSize">0 B</b></div><div class="stat">
+    <i class="fa-regular fa-clock"></i>
+    Último upload<b id="sLast">--</b>
+</div>
         </div>
-        <div class="drop" id="drop"><span>☁️</span><p>Arraste suas imagens aqui</p><p class="muted">ou</p><br><button class="btn" id="pick" type="button">Selecionar imagens</button></div>
+        <div class="drop" id="drop"><span>
+    <i class="fa-solid fa-cloud"></i>
+</span><p>Arraste suas imagens aqui</p><p class="muted">ou</p><br><button class="btn" id="pick" type="button">Selecionar imagens</button></div>
       </section>
-      <section id="qSec" hidden><h2>Uploads</h2><div class="q" id="queue" aria-live="polite"></div></section>
-      <div class="tb"><h2 id="title"></h2>
+      <section id="qSec" hidden=""><h2>Uploads</h2><div class="q" id="queue" aria-live="polite"></div></section>
+      <div class="tb"><h2 id="title">Recentes</h2>
         <select id="sort" aria-label="Ordenar"><option value="new">Mais recentes</option><option value="old">Mais antigos</option><option value="az">Nome A-Z</option><option value="za">Nome Z-A</option><option value="big">Maior tamanho</option><option value="small">Menor tamanho</option></select>
-        <div class="seg" id="modeSeg" role="group" aria-label="Visualização"><button data-m="grid" title="Grade" aria-label="Grade">▦</button><button data-m="list" title="Lista" aria-label="Lista">☷</button></div>
+        <div class="seg" id="modeSeg" role="group" aria-label="Visualização"><button data-m="grid" title="Grade" aria-label="Grade" aria-pressed="false">
+    <i class="fa-solid fa-border-all"></i>
+</button><button data-m="list" title="Lista" aria-label="Lista" aria-pressed="true">
+    <i class="fa-solid fa-table-list"></i>
+</button></div>
       </div>
-      <div class="grid" id="gallery"></div>
+      <div class="grid list" id="gallery"><div class="empty"><div style="font-size:2.4rem">🖼️</div><p>Nenhuma imagem ainda. Arraste arquivos ou use “Adicionar imagens”.</p></div></div>
     </main>
   </div>
   <button class="btn p fab" id="fab" aria-label="Adicionar imagens">+</button>
