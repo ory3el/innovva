@@ -54,8 +54,8 @@ body,header,nav,.card,.item,.stat,dialog,input,select,.menu,.drop{transition:bac
 button,input,select{font:inherit;color:inherit}
 button{cursor:pointer;background: none;justify-content: center;align-items: center;border: none;padding: 0;}
 .btn,.ib{border:1px solid var(--border);border-radius: 250px;padding:8px 14px;transition:transform .2s,background .2s,border-color .2s;}
-.btn:hover,.ib:hover{border-color:var(--primary);/* background:var(--hover); */transform:translateY(-1px)}
-.ib{width:36px;height:36px;padding:0;border-radius:50%;display:grid;place-items:center}
+.btn:hover,.ib:hover{border-color:var(--primary);/* background:var(--hover); */}
+.ib{width:36px;height:36px;padding:0;border-radius:50%;/* display:grid; */place-items:center}
 .btn.p{background: var(--surface);color: var(--text);border:0;transition: 0.3s;font-weight: 400;border: 1px solid var(--border2);display: flex;justify-content: center;align-items: center;}
 .btn.p:hover{background: var(--primary);color: #fff;border-color: transparent;filter:brightness(1.08)}
 .btn.p.cta i{margin-right: 5px}
@@ -209,9 +209,9 @@ dialog::backdrop{background:rgba(5,8,20,.7);backdrop-filter:blur(4px)}
 #viewer[open]{display:flex;flex-direction:column}
 .vh,.vf{display:flex;align-items:center;gap:10px;padding:12px 16px;flex-wrap:wrap}
 .vh b{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.stage{position:relative;flex:1;min-height:0;overflow:auto;display:grid;place-items:center;background:var(--bg)}
-.stage img{max-width:100%;max-height:100%;object-fit:contain;cursor:zoom-in}
-.nv{position:absolute;top:50%;transform:translateY(-50%);z-index:2}
+.stage{position:relative;flex:1;min-height:0;overflow:auto;display: grid;place-items:center;background:var(--bg)}
+.stage img{overflow-y: auto;max-width: 100%;height: 100%;object-fit: contain;border-radius: 20px;cursor:zoom-in}
+.nv{position:absolute;background: var(--surface);top:50%;justify-content: center;align-items: center;transform:translateY(-50%);z-index:2;}
 .vf{justify-content:space-between}
 .fab{position:fixed;right:16px;bottom:84px;width: 36px;height: 36px;border-radius:50%;font-size: 1.3rem;display:none}
 .toasts{position:fixed;left:50%;bottom:90px;transform:translateX(-50%);display:grid;gap:8px;z-index:100;width:min(420px,calc(100% - 24px))}
