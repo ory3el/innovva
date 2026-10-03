@@ -1,94 +1,155 @@
 <!DOCTYPE html>
 <html lang="pt-BR" data-theme="light">
 <head>
- <meta charset="utf-8">
- <meta name="viewport" content="width=device-width,initial-scale=1">
- <title>Innovva aCloud</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Innovva aCloud</title>
 
- <link rel="stylesheet" href="styles.css">
- <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
- <link rel="icon" id="favicon" type="image/png" sizes="512x512" href="/cloud/files/images/favicon.png">
- <link rel="preconnect" href="https://fonts.googleapis.com">
- 
- <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
- <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@400..700&family=Noto+Sans:ital,wght@0,100..900;1,100..900&family=Outfit:wght@100..900&family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap" rel="stylesheet">
- <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="icon" id="favicon" type="image/png" sizes="512x512" href="/cloud/files/images/favicon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@400..700&family=Noto+Sans:ital,wght@0,100..900;1,100..900&family=Outfit:wght@100..900&family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap" rel="stylesheet">
 </head>
 <body>
- 
-<!-- login -->
+
+<!-- login / cadastro -->
 <div id="login" class="login" hidden>
- <div class="card">
-  <span class="logo" style="justify-self:center;"><i>
-   <span class="logo"><img src="/cloud/files/images/favicon.png" alt="logo"></span>
-  </i><span class="appName">Innovva aCloud</span></span>
-  <h1 style="font-size:1.5rem">Faça login<x>&nbsp;ou crie uma conta</x><z>&nbsp;ou crie uma nova conta</z></h1>
-  <p class="muted">Entre na sua conta Innovva para prosseguir.</p>
-  <div class="inputs">
-   <p class="inputTitle">E-mail</p>
-   <input id="email" type="email" placeholder="seu@email.com" autocomplete="email" aria-label="E-mail">
-   <p class="inputTitle">
-    Senha 
-    <button>Esqueceu a senha?</button>
-   </p>
-   <input id="password" type="password" placeholder="Senha" autocomplete="password" aria-label="Senha">
-   </div>
-  <button class="btn p loginBtn" id="signInBtn">Entrar</button>
-  <button class="btn p googleBtn" id="signInBtn" onclick="socialLogin('google')">
-    <i class="fa-brands fa-google"></i>
-    <z>Continuar com o&nbsp;</z>Google
-  </button>
-  <button class="btn p facebookBtn" id="signInBtn">
-    <i class="fa-brands fa-facebook-f"></i>
-    <z>Continuar com o&nbsp;</z>Facebook
-  </button>
-  <p id="cfgWarn" class="muted" role="status" style="font-size:.85rem">
-    <t>Ao continuar, você confirma estar de acordo com os Termos de Uso e a Política de Privacidade da Innovva.</t>
-  </p>
-  <p class="noAccTxt">Não tem uma conta? <button class="createNewAcc">Crie uma conta</button></p>
- </div>
+  <div class="card">
+    <div id="loginMain">
+      <span class="logo" style="justify-self:center;">
+        <i><img src="/cloud/files/images/favicon.png" alt="logo"></i>
+        <span class="appName">Innovva aCloud</span>
+      </span>
+
+      <h1 style="font-size:1.5rem">Faça login <span>ou crie uma conta</span></h1>
+      <p class="muted">Entre na sua conta Innovva para prosseguir.</p>
+
+      <form id="loginForm" novalidate>
+        <div class="inputs">
+          <p class="inputTitle"><label for="email">E-mail</label></p>
+          <input id="email" type="email" placeholder="seu@email.com" autocomplete="email" aria-label="E-mail">
+
+          <p class="inputTitle">
+            <label for="password">Senha</label>
+            <button id="forgotPasswordBtn" type="button">Esqueceu a senha?</button>
+          </p>
+          <input id="password" type="password" placeholder="Senha" autocomplete="current-password" aria-label="Senha">
+        </div>
+
+        <button class="btn p loginBtn authPrimary" id="signInBtn" type="submit">Entrar</button>
+      </form>
+
+      <button class="btn p googleBtn" id="googleBtn" type="button">
+        <i class="fa-brands fa-google"></i>
+        <span>Continuar com o Google</span>
+      </button>
+
+      <button class="btn p facebookBtn" id="facebookBtn" type="button">
+        <i class="fa-brands fa-facebook-f"></i>
+        <span>Continuar com o Facebook</span>
+      </button>
+
+      <p id="cfgWarn" class="muted" role="status" style="font-size:.85rem">
+        Ao continuar, você confirma estar de acordo com os Termos de Uso e a Política de Privacidade da Innovva.
+      </p>
+
+      <p class="noAccTxt">Não tem uma conta? <button class="createNewAcc" id="createAccountBtn" type="button">Crie uma conta</button></p>
+    </div>
+
+    <div id="registerMain" hidden>
+      <span class="logo" style="justify-self:center;">
+        <i><img src="/cloud/files/images/favicon.png" alt="logo"></i>
+        <span class="appName">Innovva aCloud</span>
+      </span>
+
+      <h1 style="font-size:1.5rem">Crie sua conta</h1>
+      <p class="muted">Cadastre seus dados para começar a usar o aCloud.</p>
+
+      <form id="registerForm" novalidate>
+        <div class="inputs authRegisterGrid">
+          <div>
+            <p class="inputTitle"><label for="regName">Nome</label></p>
+            <input id="regName" type="text" placeholder="Seu nome" autocomplete="given-name" maxlength="100">
+          </div>
+
+          <div>
+            <p class="inputTitle"><label for="regSurname">Sobrenome</label></p>
+            <input id="regSurname" type="text" placeholder="Seu sobrenome" autocomplete="family-name" maxlength="100">
+          </div>
+
+          <div class="full">
+            <p class="inputTitle"><label for="regEmail">E-mail</label></p>
+            <input id="regEmail" type="email" placeholder="seu@email.com" autocomplete="email">
+          </div>
+
+          <div class="full">
+            <p class="inputTitle"><label for="regPhone">Telefone</label></p>
+            <input id="regPhone" type="tel" placeholder="(00) 00000-0000" autocomplete="tel" maxlength="15">
+          </div>
+
+          <div class="full">
+            <p class="inputTitle"><label for="regPassword">Senha</label></p>
+            <input id="regPassword" type="password" placeholder="Mínimo de 8 caracteres" autocomplete="new-password">
+          </div>
+        </div>
+
+        <label class="authCheck"><input id="acceptAge" type="checkbox"> Confirmo que tenho 18 anos ou mais.</label>
+        <label class="authCheck"><input id="acceptTerms" type="checkbox"> Aceito os Termos de Uso e a Política de Privacidade.</label>
+
+        <button class="btn p authPrimary" id="btnReg" type="submit">Criar conta</button>
+      </form>
+
+      <p class="noAccTxt"><button class="createNewAcc authBack" id="backToLoginBtn" type="button">← Voltar para o login</button></p>
+    </div>
+  </div>
 </div>
 
 <!-- app -->
 <div id="app" hidden>
-<header>
-  <span class="logo"><i>
-   <span class="logo"><img src="/cloud/files/images/favicon.png" alt="logo">
-  </i><span class="appName">Innovva aCloud</span></span>
-  <div class="search"><input id="search" type="search" placeholder="Pesquisar imagens..." aria-label="Pesquisar imagens"></div>
-  <div class="tools">
-    <div class="seg" data-themeseg role="group" aria-label="Tema"></div>
-    <button class="av" id="avBtn" aria-label="Menu do usuário" aria-haspopup="true" aria-expanded="false"></button>
-    <div class="menu" id="menu" hidden><div class="who"><b id="mName"></b><br><small class="muted" id="mEmail"></small></div>
-      <button data-acct>Minha conta</button><button data-acct>Configurações</button><button id="outBtn">Sair</button></div>
-  </div>
-</header>
-<div class="shell">
-  <nav aria-label="Navegação">
-    <button class="nb" data-v="home">🏠 <span>Início</span></button>
-    <button class="nb" data-v="lib">🖼️ <span>Minhas imagens</span></button>
-    <button class="nb" data-v="fav">⭐ <span>Favoritos</span></button>
-    <button class="nb" data-v="trash">🗑️ <span>Lixeira</span></button>
-    <div class="meter"><b>Armazenamento</b><div class="bar"><i id="mBar"></i></div><span id="mTxt" class="muted">--</span></div>
-  </nav>
-  <main>
-    <section id="hero">
-      <h1 id="hello">Olá</h1><p class="muted">Suas imagens</p>
-      <button class="btn p cta" id="add">+ ADICIONAR IMAGENS</button>
-      <div class="stats">
-        <div class="stat">🖼️ Imagens<b id="sImg">--</b></div><div class="stat">☁️ Armazenamento<b id="sSize">--</b></div><div class="stat">🕐 Último upload<b id="sLast">--</b></div>
+  <header>
+    <span class="logo">
+      <i><img src="/cloud/files/images/favicon.png" alt="logo"></i>
+      <span class="appName">Innovva aCloud</span>
+    </span>
+    <div class="search"><input id="search" type="search" placeholder="Pesquisar imagens..." aria-label="Pesquisar imagens"></div>
+    <div class="tools">
+      <div class="seg" data-themeseg role="group" aria-label="Tema"></div>
+      <button class="av" id="avBtn" aria-label="Menu do usuário" aria-haspopup="true" aria-expanded="false"></button>
+      <div class="menu" id="menu" hidden>
+        <div class="who"><b id="mName"></b><br><small class="muted" id="mEmail"></small></div>
+        <button data-acct>Minha conta</button><button data-acct>Configurações</button><button id="outBtn">Sair</button>
       </div>
-      <div class="drop" id="drop"><span>☁️</span><p>Arraste suas imagens aqui</p><p class="muted">ou</p><br><button class="btn" id="pick">Selecionar imagens</button></div>
-    </section>
-    <section id="qSec" hidden><h2>Uploads</h2><div class="q" id="queue" aria-live="polite"></div></section>
-    <div class="tb"><h2 id="title"></h2>
-      <select id="sort" aria-label="Ordenar"><option value="new">Mais recentes</option><option value="old">Mais antigos</option><option value="az">Nome A-Z</option><option value="za">Nome Z-A</option><option value="big">Maior tamanho</option><option value="small">Menor tamanho</option></select>
-      <div class="seg" id="modeSeg" role="group" aria-label="Visualização"><button data-m="grid" title="Grade" aria-label="Grade">▦</button><button data-m="list" title="Lista" aria-label="Lista">☷</button></div>
     </div>
-    <div class="grid" id="gallery"></div>
-  </main>
-</div>
-<button class="btn p fab" id="fab" aria-label="Adicionar imagens">+</button>
+  </header>
+  <div class="shell">
+    <nav aria-label="Navegação">
+      <button class="nb" data-v="home">🏠 <span>Início</span></button>
+      <button class="nb" data-v="lib">🖼️ <span>Minhas imagens</span></button>
+      <button class="nb" data-v="fav">⭐ <span>Favoritos</span></button>
+      <button class="nb" data-v="trash">🗑️ <span>Lixeira</span></button>
+      <div class="meter"><b>Armazenamento</b><div class="bar"><i id="mBar"></i></div><span id="mTxt" class="muted">--</span></div>
+    </nav>
+    <main>
+      <section id="hero">
+        <h1 id="hello">Olá</h1><p class="muted">Suas imagens</p>
+        <button class="btn p cta" id="add">+ ADICIONAR IMAGENS</button>
+        <div class="stats">
+          <div class="stat">🖼️ Imagens<b id="sImg">--</b></div><div class="stat">☁️ Armazenamento<b id="sSize">--</b></div><div class="stat">🕐 Último upload<b id="sLast">--</b></div>
+        </div>
+        <div class="drop" id="drop"><span>☁️</span><p>Arraste suas imagens aqui</p><p class="muted">ou</p><br><button class="btn" id="pick" type="button">Selecionar imagens</button></div>
+      </section>
+      <section id="qSec" hidden><h2>Uploads</h2><div class="q" id="queue" aria-live="polite"></div></section>
+      <div class="tb"><h2 id="title"></h2>
+        <select id="sort" aria-label="Ordenar"><option value="new">Mais recentes</option><option value="old">Mais antigos</option><option value="az">Nome A-Z</option><option value="za">Nome Z-A</option><option value="big">Maior tamanho</option><option value="small">Menor tamanho</option></select>
+        <div class="seg" id="modeSeg" role="group" aria-label="Visualização"><button data-m="grid" title="Grade" aria-label="Grade">▦</button><button data-m="list" title="Lista" aria-label="Lista">☷</button></div>
+      </div>
+      <div class="grid" id="gallery"></div>
+    </main>
+  </div>
+  <button class="btn p fab" id="fab" aria-label="Adicionar imagens">+</button>
 </div>
 
 <dialog id="viewer" aria-label="Visualizador de imagem">
@@ -101,14 +162,14 @@
   <div class="av" id="acAv" style="width:72px;height:72px;font-size:1.8rem;display:grid;place-items:center;justify-self:center"></div>
   <div style="text-align:center"><b id="acName"></b><br><span class="muted" id="acEmail"></span><br><small class="muted" id="acSince"></small></div>
   <div style="display:flex;justify-content:space-between;align-items:center"><span>Tema</span><div class="seg" data-themeseg role="group" aria-label="Tema"></div></div>
-  <button class="btn" id="acClose">Fechar</button>
+  <button class="btn" id="acClose" type="button">Fechar</button>
 </div></dialog>
 <div class="toasts" id="toasts" role="status" aria-live="polite"></div>
 <input type="file" id="file" multiple accept="image/*" hidden>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="/files/scripts/loading.js"></script>
-<script src="/files/scripts/login.js"></script>
+<script src="login.js"></script>
 <script src="script.js"></script>
 </body>
 </html>
