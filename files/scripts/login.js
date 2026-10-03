@@ -1,602 +1,402 @@
 const SUPABASE_URL = "https://sycnitxcfdctzpwpgxcv.supabase.co";
 const SUPABASE_ANON_KEY = "sb_publishable_wH3L4RoNaxchI4RD2u5upA_qly1ocoK";
-const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+  auth: {
+    persistSession: true,
+    autoRefreshToken: true,
+    detectSessionInUrl: true,
+    flowType: "pkce"
+  }
+});
+
 let userId = null;
-
-// ── GOOGLE SIGN-IN ───────────────────────────────────────────
-const GOOGLE_CLIENT_ID = '878360677801-j7amq95cfr0ekqh7bgvg8j42ciu68plm.apps.googleusercontent.com';
-let googleCredentialPending = null;
-let googleAccountPending = null;
-let googleModalResolver = null;
-
-// -------------------------------
-
-let currentNonce = '';
-function generateNonce() {
-  const array = new Uint8Array(16);
-  window.crypto.getRandomValues(array);
-  return Array.from(array, c => c.toString(16).padStart(2, '0')).join('');
-}
-
-// -------------------------------
-
-let googleReady = false;
-let isInitializingGoogle = false;
-
-async function initGoogleIdentity() {
-  if (
-    typeof google === 'undefined' ||
-    !google.accounts ||
-    !google.accounts.id
-  ) {
-    return false;
-  }
-  if (googleReady) return true;
-  if (isInitializingGoogle) return false;
-  
-  isInitializingGoogle = true;
-
-  try {
-    google.accounts.id.initialize({
-      client_id: GOOGLE_CLIENT_ID,
-      callback: handleGoogleCredential,
-      auto_select: false,
-      use_fedcm_for_prompt: true
-    });
-    
-    googleReady = true;
-    return true;
-  } finally {
-    isInitializingGoogle = false;
-  }
-}
-
-// -------------------------------
-
-const selectWait = (ms) => new Promise(resolve => setTimeout(resolve, ms));
-async function startGoogleLogin() {
-  const ready = await initGoogleIdentity();
-  if (!ready) {
-    toast('O login do Google ainda está carregando.', 'err');
-    return;
-  }
-
-  google.accounts.id.prompt(notification => {
-    console.log('Google Prompt Notification:', notification);
-    const credentialPickerContainer = document.getElementById('credential_picker_container');
-    credentialPickerContainer.style.setProperty("z-index", "850000", "important");
-    
-    if (notification.isNotDisplayed?.() || notification.isSkippedMoment?.()) {
-      const reason = notification.getNotDisplayedReason?.() || notification.getSkippedReason?.();
-      console.warn('One Tap não exibido pelo motivo:', reason);
-      triggerGooglePopupFallback();
-    }
-  });
-}
-
-// ---------------------------------------
-
-function triggerGooglePopupFallback() {
-  supabaseClient.auth.signInWithOAuth({
-    provider: 'google',
-    options: {
-      redirectTo: window.location.origin + window.location.pathname + window.location.search,
-      queryParams: {
-        prompt: 'select_account'
-      }
-    }
-  });
-}
-
-// -------------------------------
-
-function waitForGoogleIdentity() {
-  return new Promise(resolve => {
-    if (
-      typeof google !== 'undefined' &&
-      google.accounts?.id
-    ) {
-      resolve(initGoogleIdentity());
-      return;
-    }
-    let tries = 0;
-    const timer = setInterval(() => {
-      tries++;
-      if (
-        typeof google !== 'undefined' &&
-        google.accounts?.id
-      ) {
-        clearInterval(timer);
-        resolve(initGoogleIdentity());
-        return;
-      }
-      if (tries >= 100) {
-        clearInterval(timer);
-        resolve(false);
-      }
-    }, 100);
-  });
-}
-
-// ------------------------------------------------
-
-async function handleGoogleCredential(response) {
-  if (!response?.credential) {
-    toast('Não foi possível obter a conta do Google.', 'err');
-    return;
-  }
-  try {
-    hideLoadingModal();
-    showLoadingModal('Verificando conta...', 'Estamos verificando sua conta do Google');
-    const result = await verifyGoogleAccount(response.credential);
-    hideLoadingModal();
-    if (!result) return;
-    if (result.exists) {
-      await loginExistingGoogleAccount(
-        response.credential
-      );
-      return;
-    }
-
-    googleCredentialPending = response.credential;
-    googleAccountPending = result.account;
-    await showGoogleAccountConfirmation(
-      result.account
-    );
-
-  } catch (error) {
-    console.error('Erro no Google Login:', error);
-    hideLoadingModal();
-    toast(error.message || 'Não foi possível verificar a conta do Google.', 'err');
-  }
-}
-
-// ------------------------------------------------
-
-async function verifyGoogleAccount(credential) {
-  const {
-    data,
-    error
-  } = await supabaseClient.functions.invoke('google-account-check',
-    {
-      body: {
-        credential
-      }
-    }
-  );
-
-  if (error) {
-    console.error('Erro ao verificar Google:', error);
-    let message = error.message;
-    if (error.context) {
-      try {
-        const body = await error.context.json();
-        console.error('Resposta da Edge Function:', body
-        );
-        message = body?.error || body?.message || message;
-      } catch {}
-
-    }
-    throw new Error(message);
-  }
-  if (!data?.success) {
-    throw new Error(data?.error || 'Não foi possível verificar a conta.');
-  }
-  return data;
-}
-
-// ----------------------------------------------
-
-function showGoogleAccountConfirmation(account) {
-  createGoogleConfirmModal();
-  const overlay = document.getElementById('googleConfirmOverlay');
-  const avatar = document.getElementById('googleConfirmAvatar');
-  const name = document.getElementById('googleConfirmName');
-  const surname = document.getElementById('googleConfirmSurname');
-  const email = document.getElementById('googleConfirmEmail');
-  const phone = document.getElementById('googleConfirmPhone');
-  const birth = document.getElementById('googleConfirmBirth');
-  const gender = document.getElementById('googleConfirmGender');
-  avatar.src = account.picture || '/images/icons/full/user.webp';
-  name.value = account.given_name || '';
-  surname.value = account.family_name || '';
-  email.value = account.email || '';
-  phone.value = account.phone_number || '';
-  birth.value = '';
-  gender.value = '';
-  overlay.classList.add('active');
-  return new Promise(resolve => {
-    googleModalResolver = resolve;
-  });
-}
-
-// ------------------------------------------------
-
-function createGoogleConfirmModal() {
-  if (document.getElementById('googleConfirmOverlay')
-  ) {
-    return;
-  }
-
-  const overlay = document.createElement('div');
-  overlay.id = 'googleConfirmOverlay';
-  overlay.className = 'google-confirm-overlay';
-  overlay.innerHTML = `
-    <div class="google-confirm-modal">
-      <div class="google-confirm-head">
-        <div class="google-confirm-avatar">
-          <img
-            id="googleConfirmAvatar"
-            src="/images/icons/full/user.webp"
-            alt="Foto da conta Google"
-          >
-        </div>
-        <h3>
-          Confirme sua conta
-        </h3>
-        <p>
-          Verifique os dados da conta Google
-          antes de criar sua conta na Ecomme.
-        </p>
-      </div>
-      <div class="google-confirm-grid">
-        <div class="google-confirm-field">
-          <label>
-            Nome
-            <span class="google-confirm-required">*</span>
-          </label>
-          <input
-            id="googleConfirmName"
-            class="google-confirm-input"
-            type="text"
-            maxlength="100"
-            autocomplete="given-name"
-          >
-        </div>
-        <div class="google-confirm-field">
-          <label>
-            Sobrenome
-          </label>
-          <input
-            id="googleConfirmSurname"
-            class="google-confirm-input"
-            type="text"
-            maxlength="100"
-            autocomplete="family-name"
-          >
-        </div>
-        <div class="google-confirm-field full">
-          <label>
-            E-mail
-          </label>
-          <input
-            id="googleConfirmEmail"
-            class="google-confirm-input"
-            type="email"
-            readonly
-            tabindex="-1"
-          >
-        </div>
-        <div class="google-confirm-field full">
-          <label>
-            Telefone
-          </label>
-          <input
-            id="googleConfirmPhone"
-            class="google-confirm-input"
-            type="tel"
-            placeholder="(00) 00000-0000"
-            maxlength="15"
-            oninput="maskPhone(this)"
-          >
-        </div>
-        <div class="google-confirm-field">
-          <label>
-            Data de nascimento
-          </label>
-          <input
-            id="googleConfirmBirth"
-            class="google-confirm-input"
-            type="date"
-          >
-
-        </div>
-        <div class="google-confirm-field">
-          <label>
-            Gênero
-          </label>
-          <select
-            id="googleConfirmGender"
-            class="google-confirm-input"
-          >
-            <option value="">
-              Prefiro não informar
-            </option>
-            <option value="Masculino">
-              Masculino
-            </option>
-            <option value="Feminino">
-              Feminino
-            </option>
-            <option value="Outro">
-              Outro
-            </option>
-          </select>
-        </div>
-      </div>
-      <div class="google-confirm-actions">
-        <button
-          type="button"
-          class="google-confirm-btn google-confirm-cancel"
-          onclick="cancelGoogleAccountCreation()"
-        >
-          Cancelar
-        </button>
-        
-        <button
-          type="button"
-          id="googleConfirmContinue"
-          class="google-confirm-btn google-confirm-continue"
-          onclick="confirmGoogleAccountCreation()"
-        >
-          Continuar
-        </button>
-      </div>
-    </div>
-  `;
-  document.body.appendChild(overlay);
-}
-
-// --------------------------------------
-
-function cancelGoogleAccountCreation() {
-  googleCredentialPending = null;
-  googleAccountPending = null;
-  const overlay = document.getElementById('googleConfirmOverlay');
-  if (overlay) {
-    overlay.classList.remove('active');
-  }
-  if (googleModalResolver) {
-    googleModalResolver(false);
-    googleModalResolver = null;
-  }
-}
-
-// -----------------------------------------------
-
-async function confirmGoogleAccountCreation() {
-  if (!googleCredentialPending) {
-    toast('A sessão do Google expirou. Tente novamente.', 'err'
-    );
-    return;
-  }
-  const nameInput = document.getElementById('googleConfirmName');
-  const surnameInput = document.getElementById('googleConfirmSurname');
-  const phoneInput = document.getElementById('googleConfirmPhone');
-  const birthInput = document.getElementById('googleConfirmBirth');
-  const genderInput = document.getElementById('googleConfirmGender');
-  const btn = document.getElementById('googleConfirmContinue');
-  const name = nameInput.value.trim();
-  const surname = surnameInput.value.trim();
-  const phone = phoneInput.value.replace(/\D/g, '');
-  const birthDate = birthInput.value || null;
-  const gender = genderInput.value || null;
-  if (!name) {
-    nameInput.focus();
-    toast('Digite seu nome para continuar.', 'err');
-    return;
-  }
-
-  btn.classList.add('loading');
-  btn.textContent = 'Criando conta...';
-
-  try {
-    const { data, error } = await supabaseClient.auth.signInWithIdToken({
-      provider: 'google', 
-      token: googleCredentialPending
-    });
-    
-    if (error) {
-      throw error;
-    }
-    if (!data?.user) {
-      throw new Error('Não foi possível criar sua conta.');
-    }
-    const fullName = `${name} ${surname}`.trim();
-
-    console.log('Dados que serão salvos no perfil:', {
-      userId: data.user.id,
-      full_name: fullName,
-      phone: phone || null,
-      birth_date: birthDate,
-      gender: gender
-    });
-    
-    const { error: profileError } =
-      await supabaseClient
-        .from('profiles')
-        .update({
-          full_name: fullName,
-          phone: phone || null,
-          birth_date: birthDate,
-          gender: gender
-        })
-        .eq('id', data.user.id);
-
-    if (profileError) {
-      console.error('Erro real ao salvar profiles:', profileError);
-      throw new Error(`A conta foi criada, mas os dados não foram salvos: ${profileError.message}`);
-    }
-    
-    googleCredentialPending = null;
-    googleAccountPending = null;
-
-    const overlay = document.getElementById('googleConfirmOverlay');
-    if (overlay) {
-      overlay.classList.remove('active');
-    }
-
-    if (googleModalResolver) {
-      googleModalResolver(true);
-      googleModalResolver = null;
-    }
-    
-    sessionStorage.removeItem('remote_logout_notice_shown');
-    toast('Conta criada com sucesso! 🎉');
-    setTimeout(() => {
-      window.location.href = getTargetUrl();
-    }, 1000);
-  } catch (error) {
-    console.error('Erro ao criar conta Google:', error);
-    toast(error.message || 'Não foi possível criar a conta.', 'err');
-    btn.classList.remove('loading');
-    btn.textContent = 'Continuar';
-  }
-}
-
-// ---------------------------------------
-
-async function loginExistingGoogleAccount(credential, account) {
-  hideLoadingModal();
-  showLoadingModal('Entrando...', 'Verificando sua conta');
-  try {
-    const { data, error } = await supabaseClient.auth.signInWithIdToken({
-      provider: 'google', 
-      token: credential
-    });
-    
-    if (!error && data?.session) return;
-    console.error('Erro no signInWithIdToken:', error);
-    if (
-      error &&
-      (
-        error.code === 'user_already_exists' ||
-        error.code === 'email_exists' ||
-        error.message ?.toLowerCase().includes('already exists')
-      )
-    ) {
-      hideLoadingModal();
-      const {data: oauthData, error: oauthError} =
-        await supabaseClient.auth
-          .signInWithOAuth({
-            provider: 'google',
-            options: {
-              redirectTo: window.location.origin + window.location.pathname + window.location.search,
-              queryParams: {login_hint: account?.email || ''}
-            }
-          });
-
-      if (oauthError) throw oauthError;
-      return;
-    }
-    throw error;
-  } catch (error) {
-    hideLoadingModal();
-    console.error('Erro no login Google:', error);
-
-    let message = error?.message || 'Não foi possível entrar com o Google.';
-    if (error?.code === 'identity_already_exists') {
-      message = 'Essa conta Google já está vinculada a outro usuário Ecomme.';
-    }
-    else if (error?.code === 'email_not_confirmed') {
-      message = 'O e-mail dessa conta ainda não foi confirmado.';
-    }
-    else if (error?.code === 'user_already_exists') {
-      message = 'Já existe uma conta Ecomme com esse e-mail.';
-    }
-    toast(message, 'err');
-  }
-}
-
-// ── SOCIAL LOGIN (GOOGLE & FACEBOOK - SUPABASE) ──────────
-async function socialLogin(provider) {
-  //toast(`Redirecionando para o ${provider}...`);
-  showLoadingModal('Redirecionando...', `Carregando o login com o ${provider}`);
-  const { data, error } = await supabaseClient.auth.signInWithOAuth({
-    provider: provider,
-    options: {
-      redirectTo: window.location.origin + window.location.pathname + window.location.search 
-    }
-  });
-  if (error) {
-    console.error(error);
-    requestAnimationFrame(() => {setTimeout(() => {hideLoadingModal();}, 180);});
-    toast(`Erro ao conectar com ${provider}.`, 'err');
-  }
-}
-
-// ── PAUSED ACCOUNT ─────────────────────────────────────────────
+let authBusy = false;
 let pausedAccountModalOpen = false;
 let pausedAccountChecking = false;
 
-function createPausedAccountModal() {
-  if (document.getElementById('pausedAccountOverlay')) {
+function showAuthLoading(title = "Aguarde...", message = "Processando") {
+  if (typeof showLoadingModal === "function") showLoadingModal(title, message);
+}
+
+function hideAuthLoading() {
+  if (typeof hideLoadingModal === "function") hideLoadingModal();
+}
+
+function authToast(message, type = "ok") {
+  if (typeof toast === "function") toast(message, type);
+}
+
+function setAuthButtonLoading(button, loading, text) {
+  if (!button) return;
+  button.disabled = loading;
+  button.classList.toggle("loading", loading);
+  if (text) button.textContent = text;
+}
+
+function setAuthMode(register) {
+  const loginMain = document.getElementById("loginMain");
+  const registerMain = document.getElementById("registerMain");
+  if (!loginMain || !registerMain) return;
+  loginMain.hidden = register;
+  registerMain.hidden = !register;
+  const email = document.getElementById(register ? "regEmail" : "email");
+  requestAnimationFrame(() => email?.focus());
+}
+
+async function doLogin() {
+  if (authBusy) return;
+
+  const email = document.getElementById("email");
+  const password = document.getElementById("password");
+  const btn = document.getElementById("signInBtn");
+  const emailValue = email?.value.trim() || "";
+  const passwordValue = password?.value || "";
+
+  email?.classList.remove("err");
+  password?.classList.remove("err");
+
+  if (!validateEmail(emailValue)) {
+    email?.classList.add("err");
+    authToast("Digite um e-mail válido.", "err");
+    email?.focus();
     return;
   }
 
-  const overlay = document.createElement('div');
-  overlay.id = 'pausedAccountOverlay';
-  overlay.className = 'paused-account-overlay';
+  if (!passwordValue) {
+    password?.classList.add("err");
+    authToast("Digite sua senha.", "err");
+    password?.focus();
+    return;
+  }
+
+  authBusy = true;
+  setAuthButtonLoading(btn, true, "Entrando...");
+  showAuthLoading("Entrando...", "Verificando sua conta");
+
+  try {
+    const { data, error } = await supabaseClient.auth.signInWithPassword({
+      email: emailValue,
+      password: passwordValue
+    });
+
+    if (error) throw error;
+    if (!data?.session) throw new Error("Não foi possível iniciar sua sessão.");
+
+    sessionStorage.removeItem("remote_logout_notice_shown");
+    authToast("Login realizado com sucesso! 🎉");
+  } catch (error) {
+    console.error("Erro no login:", error);
+    const code = error?.code || "";
+    let message = "E-mail ou senha incorretos.";
+
+    if (code === "email_not_confirmed") {
+      message = "Confirme seu e-mail antes de entrar.";
+    } else if (error?.message?.toLowerCase().includes("too many requests")) {
+      message = "Muitas tentativas. Aguarde alguns instantes e tente novamente.";
+    }
+
+    authToast(message, "err");
+    hideAuthLoading();
+  } finally {
+    authBusy = false;
+    setAuthButtonLoading(btn, false, "Entrar");
+  }
+}
+
+async function doRegister() {
+  if (authBusy) return;
+
+  const name = document.getElementById("regName");
+  const surname = document.getElementById("regSurname");
+  const email = document.getElementById("regEmail");
+  const phone = document.getElementById("regPhone");
+  const password = document.getElementById("regPassword");
+  const age = document.getElementById("acceptAge");
+  const terms = document.getElementById("acceptTerms");
+  const btn = document.getElementById("btnReg");
+
+  const nameValue = name?.value.trim() || "";
+  const surnameValue = surname?.value.trim() || "";
+  const emailValue = email?.value.trim() || "";
+  const phoneValue = phone?.value.replace(/\D/g, "") || "";
+  const passwordValue = password?.value || "";
+
+  [name, email, phone, password].forEach(el => el?.classList.remove("err"));
+
+  if (!nameValue) {
+    name?.classList.add("err");
+    authToast("Digite seu nome.", "err");
+    name?.focus();
+    return;
+  }
+
+  if (!validateEmail(emailValue)) {
+    email?.classList.add("err");
+    authToast("Digite um e-mail válido.", "err");
+    email?.focus();
+    return;
+  }
+
+  if (phoneValue && phoneValue.length < 10) {
+    phone?.classList.add("err");
+    authToast("Digite um telefone válido ou deixe o campo em branco.", "err");
+    phone?.focus();
+    return;
+  }
+
+  if (passwordValue.length < 8) {
+    password?.classList.add("err");
+    authToast("A senha precisa ter pelo menos 8 caracteres.", "err");
+    password?.focus();
+    return;
+  }
+
+  if (age && !age.checked) {
+    authToast("Você precisa confirmar que tem 18 anos ou mais.", "err");
+    return;
+  }
+
+  if (terms && !terms.checked) {
+    authToast("Aceite os Termos de Uso e a Política de Privacidade para continuar.", "err");
+    return;
+  }
+
+  authBusy = true;
+  const fullName = `${nameValue} ${surnameValue}`.trim();
+  setAuthButtonLoading(btn, true, "Criando conta...");
+  showAuthLoading("Criando conta...", "Preparando seu aCloud");
+
+  try {
+    const { data, error } = await supabaseClient.auth.signUp({
+      email: emailValue,
+      password: passwordValue,
+      options: {
+        data: {
+          full_name: fullName,
+          name: nameValue,
+          surname: surnameValue,
+          phone: phoneValue || null
+        }
+      }
+    });
+
+    if (error) throw error;
+
+    sessionStorage.removeItem("remote_logout_notice_shown");
+
+    if (data?.session) {
+      authToast("Conta criada com sucesso! 🎉");
+      return;
+    }
+
+    hideAuthLoading();
+    authToast("Conta criada! Verifique seu e-mail para confirmar o cadastro. ✉️");
+    setAuthMode(false);
+
+    const loginEmail = document.getElementById("email");
+    if (loginEmail) loginEmail.value = emailValue;
+  } catch (error) {
+    console.error("Erro ao criar conta:", error);
+    hideAuthLoading();
+
+    let message = error?.message || "Não foi possível criar sua conta.";
+    const lower = message.toLowerCase();
+    if (lower.includes("already registered") || lower.includes("already exists") || error?.code === "user_already_exists") {
+      message = "Esse e-mail já está cadastrado. Faça login ou use outro e-mail.";
+    }
+
+    authToast(message, "err");
+  } finally {
+    authBusy = false;
+    setAuthButtonLoading(btn, false, "Criar conta");
+  }
+}
+
+async function sendForgot() {
+  const email = document.getElementById("email");
+  const value = email?.value.trim() || "";
+
+  if (!validateEmail(value)) {
+    email?.classList.add("err");
+    authToast("Digite seu e-mail para receber o link de recuperação.", "err");
+    email?.focus();
+    return;
+  }
+
+  showAuthLoading("Recuperação de senha", "Enviando o link");
+  try {
+    const redirectTo = `${window.location.origin}${window.location.pathname}`;
+    const { error } = await supabaseClient.auth.resetPasswordForEmail(value, { redirectTo });
+    if (error) throw error;
+    hideAuthLoading();
+    authToast("Link de recuperação enviado para seu e-mail. ✉️");
+  } catch (error) {
+    console.error("Erro ao recuperar senha:", error);
+    hideAuthLoading();
+    authToast("Não foi possível enviar o link de recuperação.", "err");
+  }
+}
+
+async function socialLogin(provider) {
+  if (authBusy) return;
+  authBusy = true;
+
+  const label = provider === "google" ? "Google" : provider === "facebook" ? "Facebook" : provider;
+  showAuthLoading("Redirecionando...", `Abrindo o login com ${label}`);
+
+  try {
+    const redirectTo = `${window.location.origin}${window.location.pathname}`;
+    const { error } = await supabaseClient.auth.signInWithOAuth({
+      provider,
+      options: {
+        redirectTo,
+        queryParams: provider === "google" ? { prompt: "select_account" } : undefined
+      }
+    });
+    if (error) throw error;
+  } catch (error) {
+    console.error(`Erro no login ${provider}:`, error);
+    hideAuthLoading();
+    authToast(`Não foi possível conectar com o ${label}. Verifique se o provedor está configurado no Supabase.`, "err");
+    authBusy = false;
+  }
+}
+
+function startGoogleLogin() {
+  return socialLogin("google");
+}
+
+function getDeviceInfo() {
+  const ua = navigator.userAgent;
+  let browser = "Desconhecido";
+  let os = "Desconhecido";
+
+  if (/Edg\//i.test(ua)) browser = "Edge";
+  else if (/OPR\//i.test(ua) || /Opera/i.test(ua)) browser = "Opera";
+  else if (/SamsungBrowser/i.test(ua)) browser = "Samsung Internet";
+  else if (/Firefox\//i.test(ua)) browser = "Firefox";
+  else if (/Chrome\//i.test(ua)) browser = "Chrome";
+  else if (/Safari\//i.test(ua) && !/Chrome|Chromium/i.test(ua)) browser = "Safari";
+
+  if (/iPhone|iPad|iPod/i.test(ua)) os = "iOS";
+  else if (/Android/i.test(ua)) os = "Android";
+  else if (/Windows/i.test(ua)) os = "Windows";
+  else if (/Macintosh|Mac OS X/i.test(ua)) os = "macOS";
+  else if (/Linux/i.test(ua)) os = "Linux";
+
+  return { browser, os };
+}
+
+async function registerNewSession(userId) {
+  if (!userId) return;
+
+  try {
+    let localSessionId = localStorage.getItem("local_session_id");
+
+    if (localSessionId) {
+      const { data: existingSession, error } = await supabaseClient
+        .from("user_sessions")
+        .select("id")
+        .eq("id", localSessionId)
+        .eq("user_id", userId)
+        .maybeSingle();
+
+      if (error || !existingSession) {
+        localStorage.removeItem("local_session_id");
+        localSessionId = null;
+      }
+    }
+
+    const { browser, os } = getDeviceInfo();
+    let ip = "Desconhecido";
+
+    try {
+      const response = await fetch("https://api.ipify.org?format=json", { cache: "no-store" });
+      if (response.ok) ip = (await response.json()).ip || ip;
+    } catch {}
+
+    if (localSessionId) {
+      const { error } = await supabaseClient
+        .from("user_sessions")
+        .update({ browser, os, ip_address: ip, last_seen_at: new Date().toISOString() })
+        .eq("id", localSessionId)
+        .eq("user_id", userId);
+      if (error) console.error("Erro ao atualizar sessão:", error);
+      return;
+    }
+
+    const { data, error } = await supabaseClient
+      .from("user_sessions")
+      .insert([{
+        user_id: userId,
+        browser,
+        os,
+        ip_address: ip,
+        last_seen_at: new Date().toISOString()
+      }])
+      .select("id")
+      .single();
+
+    if (error) {
+      console.error("Erro ao salvar sessão:", error.message);
+      return;
+    }
+
+    if (data?.id) localStorage.setItem("local_session_id", data.id);
+  } catch (error) {
+    console.error("Erro ao registrar sessão:", error);
+  }
+}
+
+function createPausedAccountModal() {
+  if (document.getElementById("pausedAccountOverlay")) return;
+
+  const overlay = document.createElement("div");
+  overlay.id = "pausedAccountOverlay";
+  overlay.className = "paused-account-overlay";
   overlay.innerHTML = `
     <div class="paused-account-modal">
-      <div class="paused-account-icon">
-        <i class="fa-solid fa-pause"></i>
-      </div>
+      <div class="paused-account-icon"><i class="fa-solid fa-pause"></i></div>
       <h3>Conta pausada</h3>
-      <p>
-        Sua conta atualmente está desativada.
-        Deseja reativá-la agora para continuar
-        acessando sua conta?
-      </p>
+      <p>Sua conta atualmente está desativada. Deseja reativá-la agora para continuar acessando?</p>
       <div class="paused-account-actions">
-
-        <button
-          type="button"
-          class="paused-account-btn secondary"
-          id="btnKeepPaused"
-          onclick="keepAccountPaused()"
-        >
-          Manter desativada
-        </button>
-
-        <button
-          type="button"
-          class="paused-account-btn primary"
-          id="btnReactivateAccount"
-          onclick="reactivateAccount()"
-        >
-          Reativar conta
-        </button>
+        <button type="button" class="paused-account-btn secondary" id="btnKeepPaused">Manter desativada</button>
+        <button type="button" class="paused-account-btn primary" id="btnReactivateAccount">Reativar conta</button>
       </div>
     </div>
   `;
+
   document.body.appendChild(overlay);
+
+  document.getElementById("btnKeepPaused")?.addEventListener("click", keepAccountPaused);
+  document.getElementById("btnReactivateAccount")?.addEventListener("click", reactivateAccount);
 }
 
 function showPausedAccountModal() {
   createPausedAccountModal();
-  const overlay = document.getElementById('pausedAccountOverlay');
-  if (!overlay) {
-    return Promise.resolve(false);
-  }
+  const overlay = document.getElementById("pausedAccountOverlay");
+  if (!overlay) return Promise.resolve(false);
+
   pausedAccountModalOpen = true;
-  overlay.classList.add('active');
+  overlay.classList.add("active");
+
   return new Promise(resolve => {
     overlay._resolveDecision = resolve;
   });
 }
 
 function closePausedAccountModal() {
-  const overlay = document.getElementById('pausedAccountOverlay');
+  const overlay = document.getElementById("pausedAccountOverlay");
   if (!overlay) return;
-  overlay.classList.remove('active');
+  overlay.classList.remove("active");
   pausedAccountModalOpen = false;
 }
 
 async function keepAccountPaused() {
-  const overlay = document.getElementById('pausedAccountOverlay');
+  const overlay = document.getElementById("pausedAccountOverlay");
   const resolve = overlay?._resolveDecision;
   closePausedAccountModal();
+  await supabaseClient.auth.signOut({ scope: "local" });
   if (resolve) {
     overlay._resolveDecision = null;
     resolve(false);
@@ -606,485 +406,125 @@ async function keepAccountPaused() {
 async function reactivateAccount() {
   if (pausedAccountChecking) return;
   pausedAccountChecking = true;
-  const btn = document.getElementById('btnReactivateAccount');
-  const otherBtn = document.getElementById('btnKeepPaused');
 
-  if (btn) {
-    btn.classList.add('loading');
-    btn.textContent = 'Reativando...';
-  }
-  if (otherBtn) {
-    otherBtn.disabled = true;
-  }
+  const btn = document.getElementById("btnReactivateAccount");
+  const otherBtn = document.getElementById("btnKeepPaused");
+  setAuthButtonLoading(btn, true, "Reativando...");
+  if (otherBtn) otherBtn.disabled = true;
 
   try {
-    const {
-      data: { session },
-      error: sessionError
-    } = await supabaseClient.auth.getSession();
-    if (sessionError || !session?.user?.id) {
-      throw new Error( 'Sua sessão expirou. Faça login novamente.');
-    }
+    const { data: { session }, error: sessionError } = await supabaseClient.auth.getSession();
+    if (sessionError || !session?.user?.id) throw new Error("Sua sessão expirou. Faça login novamente.");
 
-    const { error } =
-      await supabaseClient
-        .from('profiles')
-        .update({
-          account_status: 'active',
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', session.user.id);
+    const { error } = await supabaseClient
+      .from("profiles")
+      .update({ account_status: "active", updated_at: new Date().toISOString() })
+      .eq("id", session.user.id);
 
-    if (error) {
-      console.error('Erro ao reativar conta:', error
-      );
-      throw new Error('Não foi possível reativar sua conta.'
-      );
-    }
+    if (error) throw error;
 
-    const overlay = document.getElementById('pausedAccountOverlay');
+    const overlay = document.getElementById("pausedAccountOverlay");
     const resolve = overlay?._resolveDecision;
     closePausedAccountModal();
+
     if (resolve) {
       overlay._resolveDecision = null;
       resolve(true);
     }
-  } catch (error) {
-    console.error('Erro ao reativar conta:', error);
-    toast(error.message || 'Não foi possível reativar sua conta.', 'err');
 
-    if (btn) {
-      btn.classList.remove('loading');
-      btn.textContent = 'Reativar conta';
-    }
-    if (otherBtn) {
-      otherBtn.disabled = false;
-    }
+    authToast("Conta reativada com sucesso! 🎉");
+  } catch (error) {
+    console.error("Erro ao reativar conta:", error);
+    authToast("Não foi possível reativar sua conta.", "err");
+    setAuthButtonLoading(btn, false, "Reativar conta");
+    if (otherBtn) otherBtn.disabled = false;
+  } finally {
     pausedAccountChecking = false;
-    return false;
   }
 }
 
-
 async function checkPausedAccount(user) {
-  if (!user?.id) {
-    return false;
-  }
+  if (!user?.id) return false;
+
   try {
-    const {
-      data: profile,
-      error
-    } = await supabaseClient
-      .from('profiles')
-      .select('account_status')
-      .eq('id', user.id)
+    const { data: profile, error } = await supabaseClient
+      .from("profiles")
+      .select("account_status")
+      .eq("id", user.id)
       .maybeSingle();
 
     if (error) {
-      console.error('Erro ao verificar status da conta:', error);
-      return true;
-    }
-    const status = profile?.account_status || 'active';
-    if (status !== 'paused') {
+      console.error("Erro ao verificar status da conta:", error);
       return true;
     }
 
+    if ((profile?.account_status || "active") !== "paused") return true;
+
     const shouldReactivate = await showPausedAccountModal();
-    if (!shouldReactivate) {
-      await supabaseClient.auth.signOut({
-        scope: 'local'
-      });
-      return false;
-    }
-    return true;
+    return !!shouldReactivate;
   } catch (error) {
-    console.error('Erro ao verificar conta pausada:', error);
-    toast('Não foi possível verificar o status da sua conta.', 'err');
+    console.error("Erro ao verificar conta pausada:", error);
+    authToast("Não foi possível verificar o status da sua conta.", "err");
     return false;
   }
 }
 
-// ── LOGIN E-MAIL & PWD (SUPABASE) ────────────────
-async function doLogin() {
-  let valid = true;
-  const email = document.getElementById('loginEmail');
-  const pwd = document.getElementById('loginPwd');
-  if (!validateEmail(email.value.trim())) {
-    showFieldErr(email, 'loginEmailErr');
-    valid = false;
-  }
-
-  if (!pwd.value) {
-    showFieldErr(pwd, 'loginPwdErr');
-    valid = false;
-  }
-  if (!valid) {
-    toast('Preencha os campos obrigatórios', 'err');
-    return;
-  }
-  const btn = document.getElementById('btnLogin');
-  btn.classList.add('loading');
-  const {
-    data,
-    error
-  } = await supabaseClient.auth.signInWithPassword({
-    email: email.value.trim(),
-    password: pwd.value
-  });
-
-  btn.classList.remove('loading');
-  if (error) {
-    console.error('Erro no login:', error);
-    toast('E-mail ou senha incorretos.', 'err');
-    return;
-  }
+function togglePwd(id, button) {
+  const input = document.getElementById(id);
+  if (!input) return;
+  const show = input.type === "password";
+  input.type = show ? "text" : "password";
+  if (button) button.textContent = show ? "🙈" : "👁";
 }
 
-// ── REGISTER E-MAIL & PWD (SUPABASE) ─────────────
-async function doRegister(){
-  let valid = true;
-  const name  = document.getElementById('regName');
-  const sob   = document.getElementById('regSob');
-  const email = document.getElementById('regEmail');
-  const phone = document.getElementById('regPhone');
-  const pwd   = document.getElementById('regPwd');
-  
-  const termsAge = document.getElementById('acceptAge');
-  const termsDoc = document.getElementById('acceptTerms');
-  
-  if(!name.value.trim()){ showFieldErr(name,'regNameErr'); valid = false; }
-  if(!validateEmail(email.value.trim())){ showFieldErr(email,'regEmailErr'); valid = false; }
-  
-  const phoneValue = phone.value.replace(/\D/g, '');
-  if(phoneValue.length < 11){ showFieldErr(phone, 'regPhoneErr'); valid = false; }
-  if(pwd.value.length < 8){ showFieldErr(pwd,'regPwdErr'); valid = false; }
-  
-  if(termsAge && !termsAge.checked){ toast('Você precisa ter 18 anos ou mais','err'); return; }
-  if(termsDoc && !termsDoc.checked){ toast('Aceite os termos para continuar','err'); return; }
+function maskPhone(input) {
+  let value = String(input?.value || "").replace(/\D/g, "").slice(0, 11);
+  if (value.length > 6) value = `(${value.slice(0, 2)}) ${value.slice(2, 7)}-${value.slice(7)}`;
+  else if (value.length > 2) value = `(${value.slice(0, 2)}) ${value.slice(2)}`;
+  else if (value.length > 0) value = `(${value.slice(0, 2)}`;
+  if (input) input.value = value;
+}
 
-  const captchaToken = hcaptcha.getResponse();
-  if (!captchaToken) {
-    toast('Por favor, confirme que você não é um robô 🤖', 'err');
-    return;
-  }
-  const btn = document.getElementById('btnReg');
-  btn.classList.add('loading');
-  const fullName = `${name.value.trim()} ${sob.value.trim()}`.trim(); 
-  const { data, error } = await supabaseClient.auth.signUp({
-    email: email.value.trim(),
-    password: pwd.value,
-    options: {
-      captchaToken: captchaToken,
-      data: {
-        full_name: fullName,
-        phone: phoneValue
+function validateEmail(value) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+}
+
+window.doLogin = doLogin;
+window.doRegister = doRegister;
+window.sendForgot = sendForgot;
+window.socialLogin = socialLogin;
+window.startGoogleLogin = startGoogleLogin;
+window.maskPhone = maskPhone;
+window.checkPausedAccount = checkPausedAccount;
+window.registerNewSession = registerNewSession;
+
+(function bindAuthEvents() {
+  const run = () => {
+    document.getElementById("loginForm")?.addEventListener("submit", event => {
+      event.preventDefault();
+      doLogin();
+    });
+
+    document.getElementById("registerForm")?.addEventListener("submit", event => {
+      event.preventDefault();
+      doRegister();
+    });
+
+    document.getElementById("createAccountBtn")?.addEventListener("click", () => setAuthMode(true));
+    document.getElementById("backToLoginBtn")?.addEventListener("click", () => setAuthMode(false));
+    document.getElementById("forgotPasswordBtn")?.addEventListener("click", sendForgot);
+    document.getElementById("googleBtn")?.addEventListener("click", startGoogleLogin);
+    document.getElementById("facebookBtn")?.addEventListener("click", () => socialLogin("facebook"));
+    document.getElementById("regPhone")?.addEventListener("input", event => maskPhone(event.target));
+
+    document.getElementById("password")?.addEventListener("keydown", event => {
+      if (event.key === "Enter") {
+        event.preventDefault();
+        document.getElementById("loginForm")?.requestSubmit();
       }
-    }
-  });
-  hcaptcha.reset();
-  btn.classList.remove('loading');
+    });
+  };
 
-  if(!valid) return;
-  
-  if (error) {
-    console.error(error);
-    toast(error.message, 'err');
-  } else {
-    sessionStorage.removeItem('remote_logout_notice_shown');
-    toast('Conta criada! Verifique o seu e-mail para confirmar o cadastro. 🚀');
-  }
-}
-
-// ── LOCK VARIABLE ──
-let redirectionInProgress = false;
-
-// ── DEVICE REGISTER ──────────────────────
-function getDeviceInfo() {
-  const ua = navigator.userAgent;
-  let browser = "Desconhecido";
-  let os = "Desconhecido";
-
-  // Browser
-  if (/Edg\//i.test(ua)) {
-    browser = "Edge";
-  } else if (/OPR\//i.test(ua) || /Opera/i.test(ua)) {
-    browser = "Opera";
-  } else if (/Firefox\//i.test(ua)) {
-    browser = "Firefox";
-  } else if (/SamsungBrowser/i.test(ua)) {
-    browser = "Samsung Internet";
-  } else if (/Chrome\//i.test(ua)) {
-    browser = "Chrome";
-  } else if (/Safari\//i.test(ua) && !/Chrome|Chromium/i.test(ua)) {
-    browser = "Safari";
-  }
-
-  // OS
-  if (/iPhone|iPad|iPod/i.test(ua)) {
-    os = "iOS";
-  } else if (/Android/i.test(ua)) {
-    os = "Android";
-  } else if (/Windows/i.test(ua)) {
-    os = "Windows";
-  } else if (/Macintosh|Mac OS X/i.test(ua)) {
-    os = "macOS";
-  } else if (/Linux/i.test(ua)) {
-    os = "Linux";
-  }
-
-  return { browser, os };
-}
-
-async function registerNewSession(userId) {
-  if (!userId) return;
-
-  let localSessionId = localStorage.getItem('local_session_id');
-  if (localSessionId) {
-    const { data: existingSession, error } =
-      await supabaseClient
-        .from('user_sessions')
-        .select('id')
-        .eq('id', localSessionId)
-        .eq('user_id', userId)
-        .maybeSingle();
-    
-    if (!existingSession || error) {
-      localStorage.removeItem('local_session_id');
-      localSessionId = null;
-    }
-  }
-  const { browser, os } = getDeviceInfo();
-  let ip = "Desconhecido";
-  try {
-    const res = await fetch(
-      'https://api.ipify.org?format=json'
-    );
-    if (res.ok) {
-      const data = await res.json();
-      ip = data.ip || "Desconhecido";
-    }
-  } catch (e) {
-    console.warn(
-      "Não foi possível capturar o IP."
-    );
-  }
-  if (localSessionId) {
-    const { error } = await supabaseClient
-      .from('user_sessions')
-      .update({
-        browser,
-        os,
-        ip_address: ip,
-        last_seen_at: new Date().toISOString()
-      })
-      .eq('id', localSessionId)
-      .eq('user_id', userId);
-    
-    if (error) {
-      console.error(
-        'Erro ao atualizar sessão:',
-        error
-      );
-    }
-    return;
-  }
-  const { data, error } =
-    await supabaseClient
-      .from('user_sessions')
-      .insert([{
-        user_id: userId,
-        browser,
-        os,
-        ip_address: ip,
-        last_seen_at: new Date().toISOString()
-      }])
-      .select('id')
-      .single();
-  
-  if (error) {
-    console.error(
-      '🚨 ERRO AO SALVAR SESSÃO:',
-      error.message
-    );
-    return;
-  }
-  if (data?.id) {
-    localStorage.setItem(
-      'local_session_id',
-      data.id
-    );
-  }
-}
-
-// ── ACTIVE SESSION & URL CLEAR ────────────
-supabaseClient.auth.onAuthStateChange(async (event, session) => {
-    if (!session || redirectionInProgress) {
-      return;
-    }
-    redirectionInProgress = true;
-    try {
-      const canContinue = await checkPausedAccount(session.user);
-      if (!canContinue) {
-        redirectionInProgress = false;
-        return;
-      }
-      sessionStorage.removeItem('remote_logout_notice_shown');
-      await registerNewSession(session.user.id);
-      const finalDestination = getTargetUrl();
-      if (
-        window.location.search || window.location.hash
-      ) {
-        window.history.replaceState(
-          {},
-          document.title, window.location.pathname
-        );
-      }
-
-      localStorage.removeItem('ecomme_redirect_url');
-      if (
-        document.getElementById('formLogin')
-      ) {
-        requestAnimationFrame(() => {
-          setTimeout(() => {
-            hideLoadingModal();
-          }, 180);
-        });
-        toast('Sessão ativa! Redirecionando... 🎉');
-        setTimeout(() => {
-          window.location.href = finalDestination;
-        }, 1200);
-      }
-    } catch (error) {
-      console.error('Erro após autenticação:', error);
-      redirectionInProgress = false;
-      toast('Não foi possível concluir o login.', 'err');
-    }
-  }
-);
-
-// ── FORGOT PASSWORD ────────────────────────────────────────
-function toggleForgot(show){
-  document.getElementById('forgotPanel').classList.toggle('on', show);
-  document.getElementById('loginMain').style.display = show ? 'none' : 'block';
-}
-
-function sendForgot(){
-  const v = document.getElementById('forgotEmail').value.trim();
-  if(!v || !v.includes('@')){ toast('Digite um e-mail válido','err'); return; }
-  
-  simulateLoad('btnLogin', () => {
-    toast('Link enviado para ' + v + ' ✉️');
-    toggleForgot(false);
-  });
-}
-
-
-// ── TOGGLE PASSWORD ────────────────────────────────────────
-function togglePwd(id, btn){
-  const inp = document.getElementById(id);
-  const show = inp.type === 'password';
-  inp.type = show ? 'text' : 'password';
-  btn.textContent = show ? '🙈' : '👁';
-}
-
-
-// ── FIELD VALIDATION ───────────────────────────────────────
-function showFieldErr(inp, msgId){
-  inp.classList.add('err');
-  const el = document.getElementById(msgId);
-  if(el){ el.style.display = 'block'; }
-}
-function clearFieldErr(inp){
-  inp.classList.remove('err');
-  const siblings = inp.parentElement.querySelectorAll('.field-err');
-  siblings.forEach(s => s.style.display = 'none');
-  if(inp.value.length > 0) inp.classList.add('ok'); else inp.classList.remove('ok');
-}
-function validateEmail(v){ return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v); }
-
-
-// ── MASKS ──────────────────────────────────────────────────
-function maskCPF(inp){
-  let v = inp.value.replace(/\D/g,'').slice(0,11);
-  if(v.length > 9) v = v.slice(0,3)+'.'+v.slice(3,6)+'.'+v.slice(6,9)+'-'+v.slice(9);
-  else if(v.length > 6) v = v.slice(0,3)+'.'+v.slice(3,6)+'.'+v.slice(6);
-  else if(v.length > 3) v = v.slice(0,3)+'.'+v.slice(3);
-  inp.value = v;
-}
-function maskPhone(inp){
-  let v = inp.value.replace(/\D/g,'').slice(0,11);
-  if(v.length > 6) v = '('+v.slice(0,2)+') '+v.slice(2,7)+'-'+v.slice(7);
-  else if(v.length > 2) v = '('+v.slice(0,2)+') '+v.slice(2);
-  inp.value = v;
-}
-
-
-// ── PASSWORD STRENGTH ──────────────────────────────────────
-function checkPwd(v){
-  const wrap = document.getElementById('pwdStrength');
-  wrap.style.display = v ? 'block' : 'none';
-  const r1 = v.length >= 8;
-  const r2 = /[A-Z]/.test(v);
-  const r3 = /[0-9]/.test(v);
-  const r4 = /[^A-Za-z0-9]/.test(v);
-  document.getElementById('r1').classList.toggle('ok', r1);
-  document.getElementById('r2').classList.toggle('ok', r2);
-  document.getElementById('r3').classList.toggle('ok', r3);
-  document.getElementById('r4').classList.toggle('ok', r4);
-  const score = [r1,r2,r3,r4].filter(Boolean).length;
-  const bars = ['pb1','pb2','pb3','pb4'];
-  const cls = ['s1','s2','s3','s4'];
-  const lbls = ['Muito fraca','Fraca','Moderada','Forte'];
-  bars.forEach((id,i) => {
-    const b = document.getElementById(id);
-    b.className = 'pwd-bar ' + (i < score ? cls[score-1] : '');
-  });
-  const lbl = document.getElementById('pwdLbl');
-  lbl.textContent = score ? lbls[score-1] : 'Muito fraca';
-  lbl.className = 'pwd-label ' + (score ? cls[score-1] : 's1');
-}
-
-
-// ── SIMULATE LOADING (Mantido para recuperar senha) ────────
-function simulateLoad(btnId, cb, delay=1400){
-  const btn = document.getElementById(btnId);
-  if (btn) btn.classList.add('loading');
-  setTimeout(() => { if(btn) btn.classList.remove('loading'); cb(); }, delay);
-}
-
-
-// ── TOAST ──────────────────────────────────────────────────
-function toast(msg, type='ok'){
-  const t  = document.getElementById('toast1');
-  const ic = document.getElementById('toastIco');
-  const tx = document.getElementById('toastMsg');
-  if(!t || !ic || !tx) return;
-  tx.textContent = msg;
-  ic.className = 'toast-ico ' + type;
-  ic.textContent = type === 'ok' ? '✓' : '!';
-  t.classList.add('on');
-  clearTimeout(t._timer);
-  t._timer = setTimeout(() => t.classList.remove('on'), 10000);
-}
-
-// ── KEYBOARD SUBMIT ────────────────────────────────────────
-document.addEventListener('keydown', e => {
-  if(e.key !== 'Enter') return;
-  const active = document.activeElement;
-  if(document.getElementById('formLogin').classList.contains('hidden')) doRegister();
-  else doLogin();
-});
-
-// ── REDIRECT FUNCTION ──
-/*function getTargetUrl() {
-  const storedRedirect = localStorage.getItem('ecomme_redirect_url');
-  if (storedRedirect) {
-    return storedRedirect;
-  }
-  const urlParams = new URLSearchParams(window.location.search);
-  const urlRedirect = urlParams.get('redirect');
-  if (urlRedirect) {
-    return urlRedirect;
-  }
-  return '/';
-}*/
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", run, { once: true });
+  else run();
+})();
