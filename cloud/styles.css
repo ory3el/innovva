@@ -197,7 +197,8 @@ select{border-radius: 250px;border:1px solid var(--border);background:var(--surf
 .list .acts{position:static;opacity:1;padding-right:10px}
 @media(max-width:700px){.list .sz,.list .dt{display:none!important}}
 .sk{aspect-ratio:1;border-radius:18px;background:linear-gradient(90deg,var(--hover),var(--border),var(--hover));background-size:200% 100%;animation:sh 1.3s infinite}
-.empty{grid-column:1/-1;text-align:center;padding:48px 12px;color:var(--muted)}
+.empty{display: grid;grid-column:1/-1;text-align:center;justify-content: center;padding:48px 12px;color:var(--muted)}
+.empty p{margin-top: 10px;max-width: 330px;display: flex;justify-content: center;align-items: center;text-align: center;}
 
 /* dialogs */
 dialog{margin:auto;border:1px solid var(--border);border-radius:22px;background:var(--surface);color:var(--text);padding:0;box-shadow:var(--shadow);max-width:100%}
