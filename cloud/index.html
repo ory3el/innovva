@@ -34,7 +34,7 @@
    <input id="password" type="password" placeholder="Senha" autocomplete="password" aria-label="Senha">
    </div>
   <button class="btn p loginBtn" id="signInBtn">Entrar</button>
-  <button class="btn p googleBtn" id="signInBtn">
+  <button class="btn p googleBtn" id="signInBtn" onclick="socialLogin('google')">
     <i class="fa-brands fa-google"></i>
     <z>Continuar com o&nbsp;</z>Google
   </button>
@@ -108,6 +108,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="/files/scripts/loading.js"></script>
+<script src="/files/scripts/login.js"></script>
 <script src="script.js"></script>
 </body>
 </html>
