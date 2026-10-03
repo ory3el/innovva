@@ -1,5 +1,3 @@
-startGoogleLogin();
-
 const APP_NAME = "aCloud";
 const BUCKET = "images", TABLE = "images";
 const STORAGE_CONFIG = {
@@ -24,33 +22,78 @@ function initializeApp() {
   if (["light", "dark", "auto"].includes(p.theme)) S.theme = p.theme;
   if (["grid", "list"].includes(p.mode)) S.mode = p.mode;
   initializeTheme(); bindEvents(); setView("home");
+  $("#login").hidden = false;
+  $("#app").hidden = true;
   if (!initializeSupabase()) return showLogin("Supabase ainda não configurado: preencha SUPABASE_URL e SUPABASE_ANON_KEY no início do script.");
   checkAuthentication();
 }
 function initializeSupabase() {
   if (!/^https?:\/\//.test(SUPABASE_URL) || SUPABASE_ANON_KEY.startsWith("COLE_") || !window.supabase) return false;
-  sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY); return true;
+  sb = supabaseClient; return true;
 }
 function showLogin(msg) { $("#login").hidden = false; $("#app").hidden = true; /*$("#cfgWarn").textContent = msg || ""*/ }
 
 /* ===================== ★ AUTENTICAÇÃO (conecte aqui) ===================== */
 async function checkAuthentication() {
-  const { data: { session } } = await sb.auth.getSession();            // ★ (1) sessão atual
-  setUser(session ? session.user : null);
-  sb.auth.onAuthStateChange((_ev, s) => setTimeout(() => setUser(s ? s.user : null), 0)); // ★ (2) login/logout/refresh
+  if (!sb) return showLogin();
+
+  const { data: { session }, error } = await sb.auth.getSession();
+  if (error) {
+    console.error("Erro ao recuperar sessão:", error);
+    return showLogin();
+  }
+
+  await setUser(session?.user || null);
+
+  sb.auth.onAuthStateChange((event, nextSession) => {
+    if (event === "TOKEN_REFRESHED" && S.user?.id === nextSession?.user?.id) return;
+    setTimeout(() => {
+      setUser(nextSession?.user || null);
+    }, 0);
+  });
 }
-async function signIn() { // ★ Substitua pelo seu fluxo (OAuth, senha via Supabase Auth etc.). Aqui: link mágico.
-  const email = $("#email").value.trim();
-  if (!sb) return toast("Configure SUPABASE_URL e SUPABASE_ANON_KEY primeiro.", "warn");
-  if (!email) return toast("Digite seu e-mail.", "warn");
-  const { error } = await sb.auth.signInWithOtp({ email, options: { emailRedirectTo: location.href.split("#")[0] } });
-  error ? toast("Não foi possível enviar o link de acesso.", "err") : toast("✓ Link de acesso enviado para o seu e-mail.");
+
+async function signIn() {
+  if (typeof doLogin === "function") return doLogin();
 }
+
 async function setUser(u) {
-  const same = u && S.user && u.id === S.user.id; S.user = u;
-  if (!u) { S.images = []; return showLogin() }
-  if (same) return;
-  $("#login").hidden = true; $("#app").hidden = false; loadUserProfile(); await loadImages();
+  const same = !!(u && S.user && u.id === S.user.id);
+  S.user = u;
+  window.userId = u?.id || null;
+
+  if (!u) {
+    S.images = [];
+    S.loading = true;
+    hideAppLoading();
+    return showLogin();
+  }
+
+  if (same && !$("#login").hidden && !$("#app").hidden) return;
+
+  if (typeof checkPausedAccount === "function") {
+    const allowed = await checkPausedAccount(u);
+    if (!allowed) {
+      S.user = null;
+      S.images = [];
+      return showLogin();
+    }
+  }
+
+  $("#login").hidden = true;
+  $("#app").hidden = false;
+
+  if (typeof registerNewSession === "function") {
+    await registerNewSession(u.id);
+  }
+
+  loadUserProfile();
+  await loadImages();
+  hideAppLoading();
+}
+
+function hideAppLoading() {
+  if (typeof hideLoadingModal === "function") hideLoadingModal();
 }
 function loadUserProfile() {
   const u = S.user, m = u.user_metadata || {}, name = m.full_name || m.name || (u.email || "").split("@")[0] || "Usuário";
@@ -221,16 +264,24 @@ function stepViewer(d) { const n = S.list.length; S.cur = (S.cur + d + n) % n; s
 function closeImageViewer() { $("#viewer").close() }
 
 /* ===================== TOAST ===================== */
-/*function showToast(msg, type) { const t = document.createElement("div"); t.className = "toast " + (type || ""); t.textContent = msg; $("#toasts").append(t); setTimeout(() => t.remove(), 4000) }
-const toast = showToast;*/
+function toast(msg, type = "ok") {
+  const container = $("#toasts");
+  if (!container) return;
+  const t = document.createElement("div");
+  t.className = "toast " + (type || "");
+  t.textContent = msg;
+  container.append(t);
+  setTimeout(() => t.remove(), 5000);
+}
+
 
 /* ===================== EVENTOS ===================== */
 function bindEvents() {
   const file = $("#file"), pickFiles = () => file.click();
   ["#add", "#pick", "#fab"].forEach(s => $(s).onclick = pickFiles);
   file.onchange = () => { uploadImages(file.files); file.value = "" };
-  $("#signInBtn").onclick = signIn; $("#email").onkeydown = e => e.key === "Enter" && signIn();
-  $("#outBtn").onclick = async () => { $("#menu").hidden = true; if (sb) await sb.auth.signOut() }; // ★ encerra a sessão
+  $("#signInBtn").onclick = signIn;
+  $("#outBtn").onclick = async () => { $("#menu").hidden = true; if (sb) { localStorage.removeItem("local_session_id"); await sb.auth.signOut({ scope: "local" }); } }; // ★ encerra a sessão
   $("#search").oninput = e => { S.q = e.target.value; render() };
   $("#sort").onchange = e => { S.sort = e.target.value; render() };
   $("#drop").onclick = e => { if (e.target === $("#drop")) pickFiles() };
