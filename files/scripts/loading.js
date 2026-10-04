@@ -5,6 +5,24 @@ function injectModalStyles() {
   const style = document.createElement('style');
   style.id = 'modal-loading-styles';
   style.textContent = `
+
+:root,[data-theme=light]{
+  --text:        #0F172A;
+  --muted:       #64748B;
+  --overlay:     rgba(255,255,255,0.1);
+  --sidebar-bg:  rgba(255,255,255,0.80);
+  --box-shdw:    0 4px 12px rgb(0 0 0 / 10%);
+}
+
+[data-theme=dark]{
+  --text:        #F8FAFC;
+  --muted:       #94A3B8;
+  --overlay:     rgba(25,100,255,0.1);
+  --sidebar-bg:  rgba(15,23,42,0.80);
+  --box-shdw:    0 0 52px rgb(255 255 255 / 20%);
+  color-scheme:  dark
+}
+  
 .loading-modal-container {
   position: fixed;
   inset: 0;
